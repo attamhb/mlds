@@ -1,0 +1,43 @@
+
+* Artificial Neurons 
+
+* Multiple Layer Artificial Layer Neurons
+
+* Back Propagation 
+
+* Parameter Tweaking
+
+* Custom Models using TensorFlow
+
+
+
+1. TensorFlow, it's main feature and other DNN libraries
+   - Open source library for numerical computations
+   - Core is similar to that of numpy
+   - GPU support
+   - Distributed computing support
+   - Computation Graph analysis
+   - 
+     
+2. TensorFlow and Numpy
+   tf offers most functionality of numpy
+   tf.reduce_sum vs np.sum()
+   Different behavior of some of the functions
+   numpy tranpos shows tranposed view
+   tf tranpos coverts into tranpose array
+   numpy arrays are mutable
+
+3. 
+   
+4. Some D
+
+
+
+
+ata Structures in TensorFlow
+4. 
+5. 
+
+Flow and numpy
+3. Some D
+

@@ -1,0 +1,118 @@
+% Created 2023-06-25 Sun 22:06
+% Intended LaTeX compiler: pdflatex
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+\usepackage{grffile}
+\usepackage{longtable}
+\usepackage{wrapfig}
+\usepackage{rotating}
+\usepackage[normalem]{ulem}
+\usepackage{amsmath}
+\usepackage{textcomp}
+\usepackage{amssymb}
+\usepackage{capt-of}
+\usepackage{hyperref}
+\author{aulw}
+\date{\today}
+\title{}
+\hypersetup{
+ pdfauthor={aulw},
+ pdftitle={},
+ pdfkeywords={},
+ pdfsubject={},
+ pdfcreator={Emacs 27.1 (Org mode 9.3)}, 
+ pdflang={English}}
+\begin{document}
+
+\tableofcontents
+
+\section{CNNS}
+\label{sec:orgc7221f7}
+
+\subsection{CNNS vs fully connected DNNS}
+\label{sec:orgf680af5}
+
+\subsection{3 CONV layers}
+\label{sec:orgd8cdd42}
+each with kernel 3x3
+each with same padding
+stride 2
+
+
+lowest layer outputs 100 feature maps
+middle layer outputs 200 feature maps
+top layer outputs 400 feature maps
+
+input images are RGP 200x300
+
+total \# of parameter in the CNN
+how much ram for 32 bit floats
+for single prediction
+ram for training  on a mini-bach of 50 images
+
+
+[200 x 300 x 3] = 3**3*600*100*200*400
+               10,800,000,000
+
+3x3x3+1 weights+bias = 28
+first: 28x100
+
+
+3x3x100 + 1 weights+bias = 901
+first: 901x200
+
+
+3x3x200 + 1 weights+bias = 1801
+first: 1801x400
+
+
+
+
+28x100
+901x200
+1801x400
+\begin{itemize}
+\item =  903400
+\end{itemize}
+
+Image
+
+(200x300) (100x150) (50x75) (25x38)
+
+32 bits is 4 bites
+first layer takes: 4x100x150x100 = 6MB
+second layer takes:4x200x75x50 = 3MB
+third layer takes: 4x400x38x25 = 1.5MB
+parameter take : 4x903400 = 3.6
+
+11.5M5 - 1.5MB + 3.6MB = 12.6MB
+
+\subsection{GPU runs out of memory}
+\label{sec:org2cccb56}
+
+\subsection{Why max pooling}
+\label{sec:orgf999f3a}
+
+\subsection{Local Response Normalization Layer}
+\label{sec:org337369e}
+
+\subsection{Alex Nets}
+\label{sec:orge2f39d0}
+
+\subsection{Other Architectures}
+\label{sec:orgff63a2a}
+
+\subsection{Fully Convolutional Layes}
+\label{sec:orgcb42720}
+
+\subsection{Semantic Segmentation}
+\label{sec:org4dd9881}
+
+\subsection{CNN on MNIST}
+\label{sec:org1433ded}
+
+\subsection{}
+\label{sec:orgd2bf8ea}
+\end{document}
