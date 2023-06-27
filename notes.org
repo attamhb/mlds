@@ -457,6 +457,337 @@ dynamically recalibrate feature maps based on their interdependencies, improving
 the representation power and enhancing the network's ability to capture complex
 patterns and relationships.
 
-* 
-* 
+*  Implementing a ResNet-34 CNN Using Keras
+First, let’s create a ResidualUnit layer:
+#+begin_src python :result outputs
+class ResidualUnit(keras.layers.Layer):
+    def __init__(self, filters, strides=1, activation="relu", **kwargs):
+        super().__init__(**kwargs)
+            self.activation = keras.activations.get(activation) 
+                self.main_layers = [keras.layers.Conv2D(filters, 3, strides=strides, padding="same", use_bias=False), keras.layers.BatchNormalization(), self.activation, keras.layers.Conv2D(filters, 3, strides=1, padding="same", use_bias=False), keras.layers.BatchNormalization()]
+            self.skip_layers = []
+            if strides > 1:
+                self.skip_layers = [keras.layers.Conv2D(filters, 1, strides=strides, padding="same", use_bias=False), keras.layers.BatchNormalization()]
+      def call(self, inputs):
+          Z = inputs
+          for layer in self.main_layers:
+              Z = layer(Z)
+          skip_Z = inputs
+          for layer in self.skip_layers:
+              skip_Z = layer(skip_Z)
+          return self.activation(Z + skip_Z)
+#+end_src
+Then in the call() method, we make the inputs go through the main layers and the
+skip layers, then we add both outputs and apply the activation function. 
+
+Next, we can build the ResNet-34 using a Sequential model, 
+sequence of layers (we can treat each residual unit as a single layer now that
+we have the ResidualUnit class): 
+#+begin_src python :result outputs
+
+model = keras.models.Sequential()
+model.add(keras.layers.Conv2D(64, 7, strides=2, input_shape=[224, 224, 3], padding="same", use_bias=False))
+model.add(keras.layers.BatchNormalization())
+model.add(keras.layers.Activation("relu"))
+model.add(keras.layers.MaxPool2D(pool_size=3, strides=2, padding="same"))
+
+prev_filters = 64
+
+for filters in [64] * 3 + [128] * 4 + [256] * 6 + [512] * 3:
+    strides = 1 if filters == prev_filters else 2
+    model.add(ResidualUnit(filters, strides=strides))
+    prev_filters = filters
+
+model.add(keras.layers.GlobalAvgPool2D())
+model.add(keras.layers.Flatten())
+model.add(keras.layers.Dense(10, activation="softmax"))
+
+#+end_src
+
+* Using Pretrained Models from Keras
+Load the ResNet-50 model, pretrained on ImageNet, 
+
+#+begin_src python :result outputs
+model = keras.applications.resnet50.ResNet50(weights="imagenet")
+#+end_src
+
+This will create a ResNet-50 model and download weights pretrained on the
+ImageNet dataset. 
+
+To use it, you first need to ensure that the images have the right size. 
+A ResNet-50 model expects 224 × 224 pixel images, 
+so let’s use TensorFlow’s tf.image.resize() function to resize the images
+#+begin_src python :result outputs
+images_resized = tf.image.resize(images, [224, 224])TIP
+#+end_src
+
+The tf.image.resize() will not preserve the aspect ratio. 
+So try to cropping the images to the appropriate aspect ratio before
+resizing. 
+Each model provides a preprocess_input() function that you can use to preprocess
+your images. 
+#+begin_src python :result outputs
+inputs = keras.applications.resnet50.preprocess_input(images_resized * 255)
+#+end_src
+Now we can use the pretrained model to make predictions:
+#+begin_src python :result outputs
+Y_proba = model.predict(inputs)
+#+end_src
+As usual, the output Y_proba is a matrix with one row per image and one
+column per class. 
+
+If you want to display the top K predictions, including the class name 
+and the estimated probability of each predicted class, 
+use the decode_predictions() function. 
+#+begin_src python :result outputs
+
+top_K = keras.applications.resnet50.decode_predictions(Y_proba, top=3)
+for image_index in range(len(images)):
+    print("Image #{}".format(image_index))
+for class_id, name, y_proba in top_K[image_index]:
+    print(" {} - {:12s} {:.2f}%".format(class_id, name, y_proba * 100))
+    print()
+
+# Image #0
+#     n03877845 - palace
+#     n02825657 - bell_cote
+#     n03781244 - monastery42.87%
+#     40.57%
+#     14.56%
+# Image #1
+#     n04522168 - vase
+#     n07930864 - cup
+#     n11939491 - daisy46.83%
+#     7.78%
+#     4.87%
+
+
+#+end_src
+
+* Pretrained Models for Transfer Learning
+Let’s train a model to classify pictures of flowers, reusing a pretrained
+Xception model.
+
+#+begin_src python :result outputs
+import tensorflow_datasets as tfds
+dataset, info = tfds.load("tf_flowers", as_supervised=True, with_info=True)
+dataset_size = info.splits["train"].num_examples # 3670class_names = info.features["label"].names # ["dandelion", "daisy", ...]
+n_classes = info.features["label"].num_classes # 5
+test_split, valid_split, train_split = tfds.Split.TRAIN.subsplit([10, 15, 75])
+test_set = tfds.load("tf_flowers", split=test_split, as_supervised=True)
+valid_set = tfds.load("tf_flowers", split=valid_split, as_supervised=True)
+train_set = tfds.load("tf_flowers", split=train_split, as_supervised=True)
+#+end_src
+Next we must preprocess the images. 
+The CNN expects 224 × 224 images,
+so we need to resize them. 
+run the images through Xception’s preprocess_input() function:
+#+begin_src python :result outputs
+def preprocess(image, label):
+    resized_image = tf.image.resize(image, [224, 224])
+    final_image =
+    keras.applications.xception.preprocess_input(resized_image)
+    return final_image, label
+
+batch_size = 32
+train_set = train_set.shuffle(1000)
+train_set = train_set.map(preprocess).batch(batch_size).prefetch(1)
+valid_set = valid_set.map(preprocess).batch(batch_size).prefetch(1)
+test_set = test_set.map(preprocess).batch(batch_size).prefetch(1)
+#+end_src
+
+To perform some data augmentation, change the preprocessing
+function for the training set, adding some random transformations to the
+training images. 
+
+ Next let’s load an Xception model, pretrained on ImageNet. 
+ We then add our own global average pooling layer, based on the output of the
+ base model, 
+ followed by a dense output layer with one unit per class, using the
+ softmax activation function. 
+  Finally, we create the Keras Model:
+#+begin_src python  :result outputs
+base_model = keras.applications.xception.Xception(weights="imagenet",
+include_top=False)
+avg = keras.layers.GlobalAveragePooling2D()(base_model.output)
+output = keras.layers.Dense(n_classes, activation="softmax")(avg)
+model = keras.Model(inputs=base_model.input, outputs=output)
+for layer in base_model.layers:
+    layer.trainable = FalseNOTE
+optimizer = keras.optimizers.SGD(lr=0.2, momentum=0.9, decay=0.01)
+model.compile(loss="sparse_categorical_crossentropy",
+optimizer=optimizer,
+metrics=["accuracy"])
+history = model.fit(train_set, epochs=5, validation_data=valid_set)
+#+end_src
+After training the model for a few epochs, its validation accuracy should
+reach about 75–80% and stop making much progress. 
+
+This means that the top layers are now pretty well trained, so we are ready to
+unfreeze all the layers  and continue training
+This time we use a much lower learning rate to avoid damaging the
+pretrained weights:
+#+begin_src python :result outputs
+
+for layer in base_model.layers:
+    layer.trainable = True
+optimizer = keras.optimizers.SGD(lr=0.01, momentum=0.9, decay=0.001)
+model.compile(...)
+history = model.fit(...)
+#+end_src
+
+* Classification and Localization
+Localizing an object in a picture can be expressed as a regression task. 
+Predict a bounding box around the object, 
+Predict the horizontal and vertical coordinates of the object’s center, 
+As well as its height and width. 
+just need to add a second dense output layer with four units, 
+
+#+begin_src python :result outputs
+base_model = keras.applications.xception.Xception(weights="imagenet", include_top=False)
+avg = keras.layers.GlobalAveragePooling2D()(base_model.output)
+class_output = keras.layers.Dense(n_classes, activation="softmax")(avg)
+loc_output = keras.layers.Dense(4)(avg)
+model = keras.Model(inputs=base_model.input,outputs=[class_output, loc_output])
+model.compile(loss=["sparse_categorical_crossentropy", "mse"],
+loss_weights=[0.8, 0.2], # depends on what you care most about
+               optimizer=optimizer, metrics=["accuracy"])
+#+end_src
+
+the dataset does not have bounding boxes around the flowers. 
+So, we need to add them ourselves. 
+open source image labeling tools
+
+ - VGG Image Annotator
+ - LabelImg
+ - OpenLabeler
+ - ImgLab
+ - commercial tool like LabelBox or Supervisely
+
+*crowdsourcing in computer vision* 
+
+Let's suppose you've obtained the bounding boxes for every image in the
+flowers dataset. 
+
+You then need to create a dataset whose items will be batches of
+preprocessed images along with their class labels and their bounding
+boxes. 
+
+Each item should be a tuple of the form (images, (class_labels, bounding_boxes)). 
+
+The MSE is not a great metric to evaluate how well the model can predict
+bounding boxes. 
+
+The most common metric for this is the Intersection over Union (IoU): 
+ 
+* Object Detection
+The task of classifying and localizing multiple objects in an image is
+called object detection. 
+
+A common approach was to take a CNN that was trained to classify and locate a
+single object, then slide it across the image. 
+*** non-max suppression 
+. Add an extra objectness output to your CNN, to estimate the probability
+  that a flower is indeed present in the image. It must use the sigmoid activation function and you can use binary cross-entropy loss. 
+  Then get rid of all the bounding boxes for which the objectness score is below some threshold.
+
+- Find the bounding box with the highest objectness score, and get
+  rid of all the other bounding boxes that overlap a lot with it. 
+  bounding box with the max objectness score is the thick bounding
+  box over the topmost rose . 
+
+- Repeat step two until there are no more bounding boxes to get rid of.
+This approach works well, but requires running the CNN many times. 
+*  Fully Convolutional Networks
+Replace the dense layers at the top of a CNN by convolutional layers. 
+To convert a dense layer to a convolutional layer, the number of filters in the
+convolutional layer must be equal to the number of units in the dense layer, 
+the filter size must be equal to the size of the input feature maps, 
+and you must use "valid" padding. 
+The stride may be set to 1 or more. 
+* You Only Look Once (YOLO)
+YOLOv3's architecture
+- It outputs five bounding boxes for each grid cell, 
+  and each bounding box comes with an objectness score. 
+  It also outputs 20 class probabilities per grid cell
+  That’s a total of 45 numbers per grid cell: 
+  5 bounding boxes, each with 4 coordinates, 
+  plus 5 objectness scores, 
+  plus 20 class probabilities.
+- YOLOv3 predicts an offset relative to the coordinates of the grid cell, 
+  where (0, 0) means the top left of that cell and (1, 1) 
+  means the bottom right. 
+
+  For each grid cell, YOLOv3 is trained to predict only bounding boxes whose
+  center lies in that cell.
+
+  YOLOv3 applies the logistic activation function to the bounding
+  box coordinates to ensure they remain in the 0 to 1 range.
+  
+- Before training,  YOLOv3 finds five representative
+  bounding box dimensions, called anchor boxes (or bounding box
+  priors). It does this by applying the K-Means algorithm to the height and
+  width of the training set bounding boxes. 
+  for each grid cell and each anchor box, the network predicts the log of the
+  vertical and horizontal rescaling factors. 
+
+- The network is trained using images of different scales: every few
+  batches during training, the network randomly chooses a new
+  image dimension allowing the network to learn to detect objects at different
+  scales.
+
+* Semantic Segmentation
+
+In semantic segmentation, each pixel is classified according to the class of
+the object it belongs to. 
+
+Different objects of the same class are notdistinguished. 
+The main difficulty in this task is that when images go through a regular CNN,
+they gradually lose their spatial resolution;
+a regular CNN may end up knowing that there’s a person somewhere in
+the bottom left of the image, but it will not be much more precise than
+that.
+
+Taking a pretrained CNN and turn it into an FCN.
+
+The CNN applies an overall stride of 32 to the input image, 
+meaning the last layer outputs feature maps that are 32 times smaller than the
+input image. 
+add a single upsampling layer that multiplies the resolution by 32. 
+
+There are several solutions available for upsampling, such as bilinear
+interpolation, but that only works reasonably well up to ×4 or ×8. 
+
+use a transposed convolutional layer: 
+it is equivalent to first stretching the image by inserting empty rows and
+columns (full of zeros), then performing a regular convolution. 
+
+Alternatively, some people prefer to think of it as a regularconvolutional 
+layer that uses fractional strides.
+
+The transposed convolutional layer can be initialized to perform
+something close to linear interpolation, 
+
+but since it is a trainable layer, 
+
+it will learn to do better during training. 
+
+To do better, add skip connections from lower layers: 
+
+In short, 
+the output of the original CNN goes through the following extra steps: 
+
+upscale ×2, 
+add the output of a lower layer, 
+upscale ×2, 
+add the output of an even lower layer, and 
+finally
+upscale ×8. 
+It is even possible to scale up beyond the size of the original
+image: this can be used to increase the resolution of an image, which is a
+technique called super-resolution
+
+Instance segmentation is similar to semantic segmentation, 
+but instead of merging all objects of the same class into one
+big lump, each object is distinguished from the others. 
 
