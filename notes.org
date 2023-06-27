@@ -192,7 +192,7 @@ the spatial dimensions (height and width):
 global_avg_pool = keras.layers.Lambda(lambda X: tf.reduce_mean(X, axis= [1, 2]))
 #+end_src  python
 
-* Tensor Flow Implementation 
+* Tensor Flow Implementatio 
 Input image: [height, width, channels]. 
 A mini-batch: [mini-batch size, height, width, channels]. 
 Weights of convolutional layer: [f_h, f_w, f_n′, f_n].
