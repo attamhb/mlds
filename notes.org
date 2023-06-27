@@ -8,32 +8,41 @@ used in image recognition since the 1980s.
 Due to the increase in computational power, the amount of available training
 data, CNNs have managed to achieve superhuman performance on some complex visual tasks. 
 
-They power image search services, self-driving cars, automatic video classification
-systems, and voice recognition and natural language processing. 
+They power image search services, 
+- Self-driving cars, 
+- Automatic video classification
+- Systems, 
+- Voice recognition 
+- Natural language processing. 
 
 * Convolutional Layers
-The most important building block of a CNN is the convolutional layer.
 
-Neurons in the first convolutional layer are not connected to every single
-pixel in the input image, but only to pixels in their receptive fields. 
+The convolutional layer is the fundamental building block of a CNN, playing a
+crucial role in its architecture.
 
-Each neuron in the second convolutional layer is connected only to
-neurons located within a small rectangle in the first layer. 
+Rather than being connected to every single pixel in the input image, neurons in
+the first convolutional layer establish connections solely with pixels within
+their respective receptive fields.
 
-This architecture allows the network to concentrate on small low-level features
-in the first hidden layer. 
+In the subsequent convolutional layer, each neuron forms connections exclusively
+with neurons positioned in a small rectangular region of the previous layer.
 
-Then assemble them into larger higher-level features in the next hidden layer, and so on. 
+This design enables the network to focus on extracting small-scale, low-level
+features in the initial hidden layer, which are then progressively combined to
+form larger, high-level features in subsequent layers.
 
-In a CNN each layer is represented in 2D, which makes it easier to match neurons
-with their corresponding inputs.
+One notable characteristic of CNNs is that each layer is represented in a 2D
+format, facilitating the correspondence between neurons and their corresponding
+inputs.
 
-A neuron located in row i, column j of a given layer 
-is connected to the outputs of the neurons in the previous layer located in 
+To illustrate, a neuron situated at row 'i' and column 'j' in a given layer
+establishes connections with the outputs of neurons in the previous layer,
+specifically within the range of:
+
 | Position of a neuron | Connections in the previous layer |
-| (i,j)                | (i:i+f_h-1,j:j+f_w-1)               |
-where f_h and f_w are the height and width of the receptive field. 
+| (i,j)                | (i:i+f_h-1, j:j+f_w-1)              |
 
+Here, 'f_h' and 'f_w' denote the height and width of the receptive field, respectively.
 ** *Padding*
 In order for a layer to have the same height and width as the previous layer, 
 it is common to add zeros around the inputs. This is called zero padding.
@@ -86,49 +95,69 @@ recognize it in any other location.
 |------------------------+----------------------------------|
 
 * Memory Requirements
-The reverse pass of backpropagation requires all the intermediate values
-computed during the forward pass.
-If training crashes because of an out-of-memory error, you can try reducing the
-mini-batch size. 
-Alternatively, you can try reducing dimensionality using a stride, 
-or removing a few layers. 
-Or you can try using 16-bit floats instead of 32-bit floats. 
-Or you could distribute the CNN across multiple devices.
+During the reverse pass of backpropagation, it is necessary to have access to
+all the intermediate values that were calculated during the forward pass.
 
+In the event of a training failure caused by an out-of-memory error, there are
+several approaches you can take to address the issue. One option is to reduce
+the size of the mini-batches used in training. By decreasing the number of
+examples processed in each iteration, you can mitigate memory constraints.
+
+Another strategy is to reduce the dimensionality of the network. This can be
+achieved by employing a stride, which decreases the spatial resolution of
+feature maps, or by removing a few layers from the architecture. Both methods
+help reduce the memory requirements.
+
+Switching from 32-bit floating-point precision to 16-bit floating-point
+precision is another potential solution. This reduces the memory footprint of
+the network at the cost of some loss in numerical precision.
+
+Alternatively, if available, you can distribute the CNN across multiple
+devices. This approach allows you to utilize the memory resources of multiple
+hardware devices in parallel, alleviating the memory limitations.
+
+By employing these techniques, you can tackle out-of-memory errors during
+training and continue the optimization process of your CNN.
 * Pooling Layers
-Each neuron in a pooling layer is
-connected to the outputs of a limited number of neurons in the previous
-layer, located within a small rectangular receptive field. 
-define its size, the stride, and the padding type, no weights; 
+Each neuron within a pooling layer establishes connections exclusively with a
+limited number of neurons from the previous layer. These connections are formed
+within a small rectangular receptive field, the dimensions of which are
+determined by the size, stride, and padding type used in the pooling
+operation. It's important to note that pooling layers do not involve weights.
 
-A max pooling layer also introduces some level of invariance
-to small translations. 
+In addition to its connectivity pattern, a max pooling layer introduces a degree
+of invariance to small translations. This means that the layer's output remains
+relatively unchanged even if the input undergoes slight shifts in position.
 
-By inserting a max pooling layer every few layers in a CNN, 
-it is possible to get some level of translation invariance at a larger scale. 
+By incorporating max pooling layers at regular intervals within a CNN
+architecture, it becomes possible to achieve a certain level of translation
+invariance on a larger scale. This means that the network becomes less sensitive
+to small positional variations of features.
 
-Max pooling offers a small amount of rotational invariance and a
-slight scale invariance. 
+Moreover, max pooling also offers a limited amount of rotational invariance and
+slight scale invariance. This implies that the network's predictions are less
+affected by moderate rotations or variations in the size of the input.
 
-Such invariance can be useful in cases where the prediction should not depend on
-these details, such as in classification tasks.
+These types of invariances provided by max pooling can be advantageous in
+scenarios where the prediction should not rely heavily on precise details, such
+as in classification tasks. They allow the network to focus more on the overall
+features and patterns rather than being overly influenced by specific positional
+or scaling factors.
 
 * TensorFlow Implementation
-Strides default to the kernel size, 
+
+By default, the stride in max pooling layers is set to the size of the pooling
+kernel. For example, in Keras, you can create a max pooling layer with a pool
+size of 2 using the following code:
 #+begin_src  python
 max_pool = keras.layers.MaxPool2D(pool_size=2)
 #+end_src  
 
-the depthwise max pooling layer 
-average pooling layer, AvgPool2D 
-max pooling preserves only the strongest features, 
+The depthwise max pooling layer is not available in Keras, but TensorFlow's
+low-level Deep Learning API does include this functionality. For instance, you
+can use the tf.nn.max_pool function to perform depthwise max pooling on
+images. The following code snippet demonstrates its usage:
 
-max pooling offers stronger
-translation invariance than average pooling, and it requires slightly less
-compute.
-
-Keras does not include a depthwise max pooling layer, but TensorFlow’s
-low-level Deep Learning API does: 
 #+begin_src  python
 output = tf.nn.max_pool(
                         images,
@@ -248,65 +277,77 @@ This CNN reaches over 92% accuracy on the test set.
 It was created by Yann LeCun in 1998 and has been widely used for handwritten
 digit recognition (MNIST). 
 * AlexNet
-The AlexNet CNN architecture won the 2012 ImageNet ILSVRC challenge 
-it achieved a top-five error rate of 17%, Alex Krizhevsky et al. 
-it was the first to stack convolutional layers directly on top of one another,
 
-To reduce over-fitting, the authors used two regularization techniques.
+The AlexNet CNN architecture, developed by Alex Krizhevsky et al., achieved
+significant success in the 2012 ImageNet ILSVRC challenge, with a top-five error
+rate of 17%. One of the notable aspects of AlexNet was its introduction of
+stacking convolutional layers directly on top of one another, which was a
+departure from previous approaches.
 
-First, they applied dropout with a 50% 
-AlexNet also uses a competitive normalization step immediately after the
-ReLU step of layers C1 and C3, called *local response normalization*
-(LRN): the most strongly activated neurons inhibit other neurons located
-at the same position in neighboring feature maps. This encourages
-different feature maps to specialize, pushing them apart and forcing them
-to explore a wider range of features, ultimately improving generalization.
+To address the issue of overfitting, the authors incorporated two regularization
+techniques in AlexNet.
+
+The first technique employed was dropout, where during training, randomly
+selected neurons in a layer are "dropped out" or temporarily ignored. In
+AlexNet, a dropout rate of 50% was applied, meaning that each neuron had a 50%
+chance of being dropped out during training. Dropout helps prevent co-adaptation
+of neurons, forcing the network to rely on more robust and general features.
+
+Additionally, AlexNet utilized a technique called local response normalization
+(LRN) immediately after the Rectified Linear Unit (ReLU) activation step in
+layers C1 and C3. LRN involves inhibiting neurons in a feature map that are
+strongly activated and located at the same position as neurons in neighboring
+feature maps. This competition between neurons encourages specialization and
+diversification among feature maps, leading to a broader exploration of features
+and improved generalization capabilities.
+
+By incorporating dropout regularization and local response normalization,
+AlexNet aimed to mitigate overfitting and enhance the network's ability to
+generalize well to unseen data. These techniques played a crucial role in the
+architecture's success in the ImageNet challenge.
+
 *  GoogLeNet 
 
-Developed by Christian Szegedy et al. from Google Research. 
-Won the ILSVRC 2014; the top-five error rate below 7%.
-much deeper than previous CNNs 
-Sub-networks called inception modules
-which allow GoogLeNet to use parameters much more efficiently 
-Inception module: 
-"3 × 3 + 1(S)" means that the layer uses a 3 × 3 kernel, stride 1, 
-and "same" padding. 
+The GoogLeNet CNN architecture, developed by Christian Szegedy et al. from
+Google Research, achieved remarkable success in the ILSVRC 2014 challenge with a
+top-five error rate below 7%. It was designed to be much deeper than previous
+CNNs and introduced the concept of inception modules, which enabled the network
+to use parameters more efficiently.
 
-The input signal is first copied and fed to four different
-layers. 
+An inception module in GoogLeNet consists of multiple parallel branches, each
+performing a different type of convolutional operation. For example, a notation
+like "3 × 3 + 1(S)" indicates a branch that uses a 3 × 3 kernel, stride 1, and
+"same" padding. The input signal is first copied and fed into each branch
+independently. All convolutional layers in the inception module use the
+ReLU activation function.
 
-All convolutional layers use the ReLU activation function. 
+The outputs from all branches are then concatenated along the depth dimension in
+the final depth concatenation layer. The inception modules serve multiple
+purposes. While they cannot capture spatial patterns, they excel at capturing
+patterns along the depth dimension. Additionally, by outputting fewer feature
+maps than their inputs, they act as bottleneck layers, reducing
+dimensionality. Moreover, each pair of convolutional layers within an inception
+module acts as a powerful convolutional layer, capable of capturing more complex
+patterns. In essence, these pairs of convolutional layers sweep a two-layer
+neural network across the image, akin to a simple linear classifier.
 
-Concatenate all the outputs along the depth dimension in the final depth
-concatenation layer. 
+The number of convolutional kernels for each convolutional layer in the
+inception module is a hyperparameter that can be adjusted. GoogLeNet consists of
+nine inception modules, and the six numbers associated with each module
+represent the number of feature maps output by each convolutional layer within
+the module.
 
-- In fact, the layers serve three purposes:
-  Although they cannot capture spatial patterns, 
-  they can capture patterns along the depth dimension.
-- They are configured to output fewer feature maps than their inputs, 
-  so they serve as bottleneck layers, meaning they reduce dimensionality. 
-- Each pair of convolutional layers acts like a single powerful convolutional
-  layer, capable of capturing more complex patterns. simple linear classifier
-  across the image, this pair of convolutional layers sweeps a two-layer neural
-  network across the image.
+The initial layers of GoogLeNet divide the image's height and width by 4,
+effectively reducing its area by 16. Subsequently, a local response
+normalization layer ensures that the preceding layers learn a diverse range of
+features. Following this, two convolutional layers are employed, where the first
+acts as a bottleneck layer.
 
-The number of convolutional kernels for each convolutional layer is a
-hyperparameter. 
-Includes nine inception modules. 
-The six numbers in the inception modules represent the
-number of feature maps output by each convolutional layer in the module
+Due to the dimensionality reduction achieved by the bottleneck layer, it is
+unnecessary to have multiple fully connected layers at the top of the CNN. This
+significantly reduces the number of parameters in the network and mitigates the
+risk of overfitting.
 
-The first two layers divide the image's height and width by 4 (so
-its area is divided by 16)
-Then the local response normalization layer ensures that the
-previous layers learn a wide variety of features.
-
-Two convolutional layers follow, where the first acts like a
-bottleneck layer. 
-
-Thanks to the dimensionality reduction brought by this layer, 
-there is no need to have several fully connected layers at the top of the CNN
-this considerably reduces the number of parameters in the network and limits the risk of overfitting. 
 * VGGNet
 It had a very simple and classical architecture, 
 with 2 or 3 convolutional layers and a pooling layer, 
@@ -315,93 +356,105 @@ and so on,
 plus a final dense network with 2 hidden layers and the output layer. 
 It used only 3 × 3 filters, but many filters.
 * ResNet
-- Models are getting deeper and deeper 
-- fewer and fewer parameters 
-- use skip connections 
-- The goal is to make it model a target function h(x) 
-- If you add the input x to the output of the network, 
-- Then the network will be forced to model f(x) = h(x) - x 
-- If the target function is fairly close to the identity function, 
-- This will speed up training considerably.
-- If you add many skip connections, the network can start making
-  Progress even if several layers have not started learning yet. 
-- The signal can easily make its way across the whole network. 
-- The deep residual network can be seen as a stack of residual units, 
-- Where each residual unit is a small neural network with a skip connection.
 
-Each residual unit is composed of two convolutional layers
+ResNet (short for Residual Network) is a type of deep convolutional neural
+network that addresses the challenges of training very deep models with an
+increasing number of parameters. It introduces skip connections, also known as
+residual connections, to facilitate the learning process.
 
-number of feature maps is doubled every few residual units
-their height and width are halved. 
-When this happens, the inputs cannot be added directly to the outputs of the
-residual unit because they don't have the same shape. 
+As models become deeper, they can encounter difficulties in convergence and
+information flow. ResNet aims to overcome these challenges by learning residual
+functions to model the target function, denoted as h(x), where x represents the
+input. By adding the input x to the output of the network, ResNet forces the
+network to learn the residual function f(x) = h(x) - x. This approach proves
+beneficial when the target function is similar to the identity function, as it
+speeds up training considerably.
 
-We solve this problem, 
-the inputs are passed through a 1 × 1 convolutional layer
-with stride 2 and the right number of output feature maps.
+The addition of skip connections allows the network to make progress even if
+some layers are not yet effectively learning. These skip connections enable the
+signal to propagate easily across the entire network, facilitating gradient flow
+and reducing the vanishing gradient problem.
+
+ResNet can be visualized as a stack of residual units, where each unit comprises
+two convolutional layers. The number of feature maps is typically doubled every
+few residual units, while their height and width are halved. However, due to the
+change in dimensions, the input cannot be directly added to the output of the
+residual unit. To address this issue, ResNet utilizes a 1 × 1 convolutional
+layer with a stride of 2 and the appropriate number of output feature maps. This
+step ensures that the input is transformed to match the dimensions of the output
+before being added to the residual unit's output.
+
+By incorporating skip connections and residual units, ResNet effectively trains
+deeper models with improved information flow and faster convergence. It has
+achieved impressive results in various computer vision tasks and has become a
+popular architecture in the deep learning community.
+
 * Xception
-it merges the ideas of GoogLeNet and ResNet, 
-but it replaces the inception modules with a special type of layer called a
-depthwise separable convolution layer. 
 
-These layers had been used before in some CNN architectures,
-but they were not as central as in the Xception architecture. 
+The Xception architecture merges ideas from both the GoogLeNet and ResNet
+architectures but replaces the inception modules with a specialized layer called
+a depthwise separable convolution layer. While separable convolution layers were
+used in some earlier CNN architectures, they take on a central role in the
+Xception architecture.
 
-A separable convolutional layer makes the strong assumption that spatial
-patterns and cross-channel patterns can be modeled separately. 
+A depthwise separable convolution layer makes the assumption that spatial
+patterns and cross-channel patterns can be modeled independently. It consists of
+two parts. The first part involves applying a single spatial filter to each
+input feature map, focusing on capturing spatial patterns. The second part
+focuses on identifying cross-channel patterns, which capture relationships
+between different channels of the input.
 
-Thus, it is composed of two parts:
-- A single spatial filter for each input feature map, 
-- Then the second part looks exclusively for cross-channel patterns
+In the Xception architecture, the initial layers comprise regular convolutional
+layers. However, for the remainder of the architecture, separable convolutions
+are predominantly used, along with a few max pooling layers and the usual final
+layers (e.g., fully connected layers).
 
-Xception architecture starts with 2 regular convolutional layers, 
-but then the rest of the architecture uses only separable convolutions,
-plus a few max pooling layers and the usual final layers.
+One of the advantages of separable convolutional layers is that they require
+fewer parameters, consume less memory, and involve fewer computations compared
+to regular convolutional layers. Additionally, they often yield better
+performance. As a result, it is recommended to consider using separable
+convolutions as the default choice in CNN architectures.
 
-Separable convolutional layers use fewer parameters, less memory, and fewer
-computations than regular convolutional layers, and in general they even perform
-better, so you should consider using them by default.
+The Xception architecture leverages depthwise separable convolution layers to
+effectively capture spatial and cross-channel patterns while being
+computationally efficient and parameter-efficient. This approach has
+demonstrated impressive results in various computer vision tasks.
 
 * SENet
-The extended versions of inception
-networks and ResNets are called SE-Inception and SE-ResNet,
-respectively. 
 
-The boost comes from the fact that a SENet adds a small
-neural network, called an SE block, to every unit in the original
-architecture, 
+The extended versions of Inception networks and ResNets, namely SE-Inception and
+SE-ResNet, incorporate an additional neural network component called an SE block
+into each unit of the original architectures.
 
-An SE block analyzes the output of the unit it is attached to, focusing
-exclusively on the depth dimension (it does not look for any spatial
-pattern), and it learns which features are usually most active together. It
-then uses this information to recalibrate the feature maps, as shown in
-Figure 14-21. For example, an SE block may learn that mouths, noses, and
-eyes usually appear together in pictures: if you see a mouth and a nose,
-you should expect to see eyes as well. So if the block sees a strong
-activation in the mouth and nose feature maps, but only mild activation in
-the eye feature map, it will boost the eye feature map (more accurately, it
-will reduce irrelevant feature maps). If the eyes were somewhat confused
-with something else, this feature map recalibration will help resolve the
-ambiguity.
+The SE block is responsible for analyzing the output of the unit it is attached
+to, focusing exclusively on the depth dimension (the channels), without
+considering spatial patterns. Its purpose is to learn which features tend to be
+active together. By leveraging this learned information, the SE block
+recalibrates the feature maps to enhance their effectiveness.
 
-An SE block is composed of just three layers: a global average pooling
-layer, a hidden dense layer using the ReLU activation function, and a
-dense output layer using the sigmoid activation function (see Figure 14-
-22)
+For example, an SE block might learn that in images, mouths, noses, and eyes
+typically appear together. If it observes strong activation in the mouth and
+nose feature maps but only mild activation in the eye feature map, it will boost
+the eye feature map (or, more accurately, reduce irrelevant feature maps). This
+recalibration process helps resolve ambiguities and improve the overall
+representation.
 
-As earlier, the global average pooling layer computes the mean activation
-for each feature map: for example, if its input contains 256 feature maps,
-it will output 256 numbers representing the overall level of response for
-each filter. The next layer is where the “squeeze” happens: this layer has
-significantly fewer than 256 neurons—typically 16 times fewer than the
-number of feature maps (e.g., 16 neurons)—so the 256 numbers get
-compressed into a small vector (e.g., 16 dimensions). This is a low-
-dimensional vector representation (i.e., an embedding) of the distribution
-of feature responses. This bottleneck step forces the SE block to learn a
-general representation of the feature combinations (we will see this
-principle in action again when we discuss autoencoders in Chapter 17).
-Finally, the output layer takes the embedding and outputs a recalibration
-vector containing one number per feature map (e.g., 256), each between 0
-and 1. The feature maps are then multiplied by this recalibration vector, so
-irrelevant features (with a low recalibration score) get scaled down while
-relevant features (with a recalibration score close to 1) are left alone.
+An SE block consists of three layers: a global average pooling layer, a hidden
+dense layer with the ReLU activation function, and a dense output layer with the
+sigmoid activation function. The global average pooling layer computes the mean
+activation for each feature map, compressing the responses into a small vector
+representation. This low-dimensional vector serves as an embedding of the
+distribution of feature responses, capturing the combinations of features. The
+output layer takes this embedding and generates a recalibration vector, with one
+number per feature map, ranging from 0 to 1. The feature maps are then
+multiplied by this recalibration vector, scaling down irrelevant features (with
+low recalibration scores) while preserving relevant features (with recalibration
+scores close to 1).
+
+By incorporating SE blocks into the architecture, SE-Inception and SE-ResNet
+models gain a boost in performance. The SE blocks allow the models to
+dynamically recalibrate feature maps based on their interdependencies, improving
+the representation power and enhancing the network's ability to capture complex
+patterns and relationships.
+
+* 
