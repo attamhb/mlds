@@ -1,0 +1,183 @@
+* Intro
+
+The TensorFlow Data API simplifies dataset creation and transformation by
+allowing you to specify data sources and processing methods. TensorFlow handles
+implementation details like multithreading, queuing, batching, and
+prefetching and seamlessly integrates with tf.keras.
+
+The Data API supports reading from text files, binary files with fixed-size
+records, TFRecord files, and even SQL databases. Data often requires
+preprocessing, such as normalization. 
+
+It can include diverse features like text and categorical fields, which need
+encoding methods like one-hot encoding, bag-of-words encoding, or embeddings.
+
+You can handle preprocessing by writing custom layers or utilizing Keras'
+standard preprocessing layers.
+
+
+*TF Transform (tf.Transform):* It enables writing a single preprocessing function
+that can be applied in batch mode on the entire training set before
+training. This speeds up the process and allows exporting it to a TF
+Function. It can then be incorporated into the trained model for seamless
+preprocessing of new instances during production.
+
+*TF Datasets (TFDS):* It offers a convenient function to download various common
+datasets, including large ones like ImageNet. Additionally, it provides handy
+dataset objects that can be manipulated using the Data API.
+
+* The Data API
+The whole Data API revolves around the concept of a dataset: 
+as you might suspect, this represents a sequence of data items. 
+
+#+begin_src  python :result outputs
+X = tf.range(10) # any data tensor
+dataset = tf.data.Dataset.from_tensor_slices(X)
+dataset
+#+end_src
+
+This takes a tensor and creates a tf.data.Dataset whose elements are all the
+slices of X, so this dataset contains 10 items
+
+* Chaining Transformations
+You can apply all sorts of transformations to a dataset  returning a new dataset, 
+so you can chain transformations like this 
+
+
+#+begin_src python :result outputs
+
+dataset = dataset.repeat(3).batch(7)
+for item in dataset:
+    print(item)
+
+#+end_src
+
+call the repeat() method to return a new dataset with repeated items of the
+original dataset three times.
+
+Then call the batch() method to group the items of the previous dataset in
+batches of seven items. 
+
+Finally, we iterate over the items of this final dataset. 
+
+The dataset methods do not modify datasets, they create new ones.
+
+You can also transform the items by calling the map() method.
+#+begin_src python :result outputs
+dataset = dataset.map(lambda x: x * 2) 
+#+end_src
+the function you pass to the map() method must be convertible to a TF Function.
+the apply() method applies a transformation to the dataset as a whole. 
+#+begin_src python :result outputs
+dataset = dataset.apply(tf.data.experimental.unbatch()) 
+#+end_src
+
+can filter the dataset using the filter() method:
+#+begin_src python :result outputs
+dataset = dataset.filter(lambda x: x < 10) 
+#+end_src
+
+* Shuffling the Data
+Gradient Descent works best when the instances in the
+training set are independent and identically distributed. A
+simple way to ensure this is to shuffle the instances, using the
+shuffle()method. 
+It will create a new dataset that will start by filling up a buffer
+with the first items of the source dataset. 
+
+Then, whenever it is asked for an item, it will pull one out randomly from the
+buffer and replace it with a fresh one from the source dataset, until it has
+iterated entirely through the source dataset. 
+#+begin_src python :result outputs
+dataset = tf.data.Dataset.range(10).repeat(3) # 0 to 9, three times
+dataset = dataset.shuffle(buffer_size=5, seed=42).batch(7)
+for item in dataset:
+    print(item)
+#+end_src
+
+If you call repeat() on a shuffled dataset, by default it will generate a new
+order at every iteration. 
+For a large dataset that does not fit in memory, this simple shuffling-
+buffer approach may not be sufficient. 
+One solution is to shuffle the source data itself. This will definitely improve shuffling a lot! 
+one approach is to split the source data into multiple files, then read them in
+a random order during training. However, instances located in the same file
+will still end up close to each other. To avoid this you can pick multiple
+files randomly and read them simultaneously, interleaving their records.
+Then on top of that you can add a shuffling buffer using the shuffle()
+method. 
+
+* Preprocessing the Data
+
+#+begin_src python :result outputs
+def preprocess(line):
+    defs = [0.] * n_inputs + [tf.constant([], dtype=tf.float32)]
+    fields = tf.io.decode_csv(line, record_defaults=defs)
+    x = tf.stack(fields[:-1])
+    y = tf.stack(fields[-1:])
+    return (x - X_mean) / X_std, y
+preprocess(b'4.2083,44.0,5.3232,0.9171,846.0,2.3370,37.47,-122.2,2.782')
+
+# (<tf.Tensor: id=6227, shape=(8,), dtype=float32, numpy=
+# array([ 0.16579159, 1.216324 , -0.05204564, -0.39215982, -0.5277444 ,
+# -0.2633488 , 0.8543046 , -1.3072058 ], dtype=float32)>,
+# <tf.Tensor: [...], numpy=array([2.782], dtype=float32)>)
+#+end_src
+
+we tell it that all feature columns are floats
+and that missing values should default to 0, 
+Putting Everything Together
+To make the code reusable, let’s put together everything we have discussed
+so far into a small helper function: it will create and return a dataset that
+will efficiently load California housing data from multiple CSV files,
+preprocess it, shuffle it, optionally repeat it, and batch it (see Figure 13-2):
+def csv_reader_dataset(filepaths, repeat=1, n_readers=5,
+n_read_threads=None, shuffle_buffer_size=10000,
+n_parse_threads=5, batch_size=32):
+dataset = tf.data.Dataset.list_files(filepaths)
+dataset = dataset.interleave(
+lambda filepath: tf.data.TextLineDataset(filepath).skip(1),
+cycle_length=n_readers, num_parallel_calls=n_read_threads)
+dataset = dataset.map(preprocess, num_parallel_calls=n_parse_threads)
+dataset = dataset.shuffle(shuffle_buffer_size).repeat(repeat)
+return dataset.batch(batch_size).prefetch(1)
+Everything should make sense in this code, except the very last line
+(prefetch(1)), which is important for performance.
+
+* Prefetching
+While our training algorithm is working on one batch, the dataset will already
+be working in parallel on getting the next batch ready. If we also ensure that
+loading and preprocessing are multithreaded, we can exploit multiple cores on
+the CPU and hopefully make preparing one batch of data shorter than running a
+training step on the GPU: this way the GPU will be almost 100% utilized. 
+
+If the dataset is small enough to fit in memory, you can significantly speed
+up training by using the dataset’s cache() method to cache its content to
+RAM. 
+
+#+begin_src python :result outputs
+train_set = csv_reader_dataset(train_filepaths)
+valid_set = csv_reader_dataset(valid_filepaths)
+test_set = csv_reader_dataset(test_filepaths)
+model = keras.models.Sequential([...])
+model.compile([...])
+model.fit(train_set, epochs=10, validation_data=valid_set)
+model.evaluate(test_set)
+new_set = test_set.take(3).map(lambda X, y: X) #  3 new instances
+model.predict(new_set) # a dataset containing new instances
+
+# alternatively
+@tf.function
+def train(model, optimizer, loss_fn, n_epochs, [...]):
+    train_set = csv_reader_dataset(train_filepaths, repeat=n_epochs, [...])
+    for X_batch, y_batch in train_set:
+        with tf.GradientTape() as tape:
+            y_pred = model(X_batch)
+            main_loss = tf.reduce_mean(loss_fn(y_batch, y_pred))
+            loss = tf.add_n([main_loss] + model.losses)
+        grads = tape.gradient(loss, model.trainable_variables)
+        optimizer.apply_gradients(zip(grads, model.trainable_variables))
+#+end_src python :result outputs
+
+*  
+
