@@ -2,27 +2,20 @@
 *  CNNS
 IBM’s Deep Blue supercomputer beat the chess world champion Garry Kasparov back in 1996
 
-CNNs emerged from the study of the brain’s visual cortex, and they have been
-used in image recognition since the 1980s. 
-
-Due to the increase in computational power, the amount of available training
-data, CNNs have managed to achieve superhuman performance on some complex visual tasks. 
-
-They power image search services, 
-- Self-driving cars, 
-- Automatic video classification
-- Systems, 
-- Voice recognition 
-- Natural language processing. 
+- CNNs emerged from the study of the brain's visual cortex.
+- CNNs have been used in image recognition since the 1980s.
+- Increase in computational power, the amount of available training
+   data, CNNs have managed to achieve superhuman performance. 
+- Self-driving cars 
+- Automatic video Classification
+- Systems 
+- Voice Recognition 
+- Natural Language Processing 
 
 * Convolutional Layers
 
-The convolutional layer is the fundamental building block of a CNN, playing a
-crucial role in its architecture.
-
-Rather than being connected to every single pixel in the input image, neurons in
-the first convolutional layer establish connections solely with pixels within
-their respective receptive fields.
+Neurons in the first convolutional layer establish connections solely with
+pixels within their respective receptive fields.
 
 In the subsequent convolutional layer, each neuron forms connections exclusively
 with neurons positioned in a small rectangular region of the previous layer.
@@ -48,110 +41,47 @@ In order for a layer to have the same height and width as the previous layer,
 it is common to add zeros around the inputs. This is called zero padding.
 
 ** *Strides*
-It is also possible to connect a large input layer to a much smaller layer by
-spacing out the receptive fields, as shown in Figure 14-4. This
-dramatically reduces the model’s computational complexity. The shift
-from one receptive field to the next is called the stride. 
+It is also possible to connect a large input layer to a much smaller layer 
+by spacing out the receptive fields. The shift from one receptive field to 
+the next is called the stride.
 
 | Position of a neuron | Connections in the previous layer |
 | (i,j)                | (i*s_h:i*s_h+f_h-1,j:j*s_w+f_w-1)      |
 where s_h and s_w are the vertical and horizontal strides.
-
-** Filters (Convolutional Kernel) 
-A neuron's weights can be represented as a small image the size of the
-receptive field, called *filters* or *convolution kernels*. 
-Thus, a layer full of neurons using the same filter outputs a *feature map*, 
-which highlights the areas in an image that activate the filter the most. 
-
-You do not have to define the filters manually. 
-During training the convolutional layer will automatically learn the most useful
-filters for its task, and the layers above will learn to combine them into more
-complex patterns.
-
-In reality a convolutional layer has multiple filters and outputs 
-*one feature map per filter*. 
-
-It has one neuron per pixel in each feature map, 
-
-All neurons within a given feature map share the same parameters. 
-
-A neuron’s receptive field is the same as described earlier, but it extends
-across all the previous layers’ feature maps. 
-
-A convolutional layer simultaneously applies multiple trainable
-filters to its inputs, making it capable of detecting multiple features anywhere
-in its inputs.
-
-The fact that all neurons in a feature map share the same parameters dramatically
-reduces the number of parameters in the model. 
-
-Once the CNN has learned to recognize a pattern in one location, it can
-recognize it in any other location.
-
-|------------------------+----------------------------------|
-| layer l, feature map k | layer l-1                        |
-|------------------------+----------------------------------|
-| (i,j)                  | (ixs_h:ixs_h+f_h-1, jxs_w:jxs_w+f_w-1) |
-|------------------------+----------------------------------|
 
 * Memory Requirements
 During the reverse pass of backpropagation, it is necessary to have access to
 all the intermediate values that were calculated during the forward pass.
 
 In the event of a training failure caused by an out-of-memory error, there are
-several approaches you can take to address the issue. One option is to reduce
-the size of the mini-batches used in training. By decreasing the number of
-examples processed in each iteration, you can mitigate memory constraints.
+several approaches you can take to address the issue. 
+- Reducing the size of the mini-batches used in training. 
+- Reducing the dimensionality of the network by employing a stride
+- Switching from 32-bit floating-point precision to 16-bit floating-point
+- Distributing the CNN across multiple devices. 
 
-Another strategy is to reduce the dimensionality of the network. This can be
-achieved by employing a stride, which decreases the spatial resolution of
-feature maps, or by removing a few layers from the architecture. Both methods
-help reduce the memory requirements.
-
-Switching from 32-bit floating-point precision to 16-bit floating-point
-precision is another potential solution. This reduces the memory footprint of
-the network at the cost of some loss in numerical precision.
-
-Alternatively, if available, you can distribute the CNN across multiple
-devices. This approach allows you to utilize the memory resources of multiple
-hardware devices in parallel, alleviating the memory limitations.
-
-By employing these techniques, you can tackle out-of-memory errors during
-training and continue the optimization process of your CNN.
 * Pooling Layers
+
 Each neuron within a pooling layer establishes connections exclusively with a
-limited number of neurons from the previous layer. These connections are formed
-within a small rectangular receptive field, the dimensions of which are
-determined by the size, stride, and padding type used in the pooling
-operation. It's important to note that pooling layers do not involve weights.
+limited number of neurons from the previous layer. 
 
-In addition to its connectivity pattern, a max pooling layer introduces a degree
-of invariance to small translations. This means that the layer's output remains
-relatively unchanged even if the input undergoes slight shifts in position.
+These connections are formed within a small rectangular receptive field, the
+dimensions of which are determined by the size, stride, and padding type used in
+the pooling operation. 
 
-By incorporating max pooling layers at regular intervals within a CNN
-architecture, it becomes possible to achieve a certain level of translation
-invariance on a larger scale. This means that the network becomes less sensitive
-to small positional variations of features.
-
-Moreover, max pooling also offers a limited amount of rotational invariance and
-slight scale invariance. This implies that the network's predictions are less
-affected by moderate rotations or variations in the size of the input.
-
-These types of invariances provided by max pooling can be advantageous in
-scenarios where the prediction should not rely heavily on precise details, such
-as in classification tasks. They allow the network to focus more on the overall
-features and patterns rather than being overly influenced by specific positional
-or scaling factors.
+- A pooling layers do not involve weights.
+- A max pooling layer introduces a degree of invariance to small translations. 
+- By incorporating max pooling layers, possible to achieve a certain level of 
+  translation invariance.
+- Max pooling offers a limited amount of rotational and scale invariance.
+- Such invariances can be advantageous where the prediction should not rely 
+  heavily on precise details
 
 * TensorFlow Implementation
 
 By default, the stride in max pooling layers is set to the size of the pooling
 kernel. For example, in Keras, you can create a max pooling layer with a pool
 size of 2 using the following code:
-#+begin_src  python
-max_pool = keras.layers.MaxPool2D(pool_size=2)
-#+end_src  
 
 The depthwise max pooling layer is not available in Keras, but TensorFlow's
 low-level Deep Learning API does include this functionality. For instance, you
@@ -159,6 +89,7 @@ can use the tf.nn.max_pool function to perform depthwise max pooling on
 images. The following code snippet demonstrates its usage:
 
 #+begin_src  python
+max_pool = keras.layers.MaxPool2D(pool_size=2)
 output = tf.nn.max_pool(
                         images,
                         ksize=(1, 1, 1, 3),
@@ -637,11 +568,19 @@ history = model.fit(...)
 #+end_src
 
 * Classification and Localization
-Localizing an object in a picture can be expressed as a regression task. 
-Predict a bounding box around the object, 
-Predict the horizontal and vertical coordinates of the object’s center, 
-As well as its height and width. 
-just need to add a second dense output layer with four units, 
+Localizing an object in a picture can be expressed as a regression task to 
+predict 
+- a bounding box around the object
+- the horizontal and vertical coordinates of the object's center 
+- height and width of the box
+
+If he datasets does not have bounding boxes. 
+- add them manually, 
+- create a dataset whose items will be batches of preprocessed images 
+  along with their class labels and their bounding boxes. 
+- each item should be a tuple of the form (images, (class_labels, bounding_boxes)). 
+
+The most common metric for this is the Intersection over Union (IoU). 
 
 #+begin_src python :result outputs
 base_model = keras.applications.xception.Xception(weights="imagenet", include_top=False)
@@ -654,32 +593,6 @@ loss_weights=[0.8, 0.2], # depends on what you care most about
                optimizer=optimizer, metrics=["accuracy"])
 #+end_src
 
-the dataset does not have bounding boxes around the flowers. 
-So, we need to add them ourselves. 
-open source image labeling tools
-
- - VGG Image Annotator
- - LabelImg
- - OpenLabeler
- - ImgLab
- - commercial tool like LabelBox or Supervisely
-
-*crowdsourcing in computer vision* 
-
-Let's suppose you've obtained the bounding boxes for every image in the
-flowers dataset. 
-
-You then need to create a dataset whose items will be batches of
-preprocessed images along with their class labels and their bounding
-boxes. 
-
-Each item should be a tuple of the form (images, (class_labels, bounding_boxes)). 
-
-The MSE is not a great metric to evaluate how well the model can predict
-bounding boxes. 
-
-The most common metric for this is the Intersection over Union (IoU): 
- 
 * Object Detection
 The task of classifying and localizing multiple objects in an image is
 called object detection. 
@@ -699,24 +612,31 @@ single object, then slide it across the image.
 - Repeat step two until there are no more bounding boxes to get rid of.
 This approach works well, but requires running the CNN many times. 
 *  Fully Convolutional Networks
-Replace the dense layers at the top of a CNN by convolutional layers. 
-To convert a dense layer to a convolutional layer, the number of filters in the
-convolutional layer must be equal to the number of units in the dense layer, 
-the filter size must be equal to the size of the input feature maps, 
-and you must use "valid" padding. 
-The stride may be set to 1 or more. 
+
+- Replace the dense layers at the top of a CNN by convolutional layers. 
+
+- To convert a dense layer to a convolutional layer, the number of filters 
+  in the convolutional layer must be equal to the number of units in the 
+  dense layer. 
+
+- The filter size must be equal to the size of the input feature maps,
+
+- Use "valid" padding
+
+- The stride may be set to 1 or more. 
 * You Only Look Once (YOLO)
+
 YOLOv3's architecture
+
 - It outputs five bounding boxes for each grid cell, 
   and each bounding box comes with an objectness score. 
   It also outputs 20 class probabilities per grid cell
-  That’s a total of 45 numbers per grid cell: 
-  5 bounding boxes, each with 4 coordinates, 
-  plus 5 objectness scores, 
+  That's a total of 45 numbers per grid cell: 
+  5 bounding boxes, each with 4 coordinates, plus 5 objectness scores, 
   plus 20 class probabilities.
-- YOLOv3 predicts an offset relative to the coordinates of the grid cell, 
-  where (0, 0) means the top left of that cell and (1, 1) 
-  means the bottom right. 
+
+- YOLOv3 predicts an offset relative to the coordinates of the grid cell where 
+  (0, 0) means the top left of that cell and (1, 1) means the bottom right. 
 
   For each grid cell, YOLOv3 is trained to predict only bounding boxes whose
   center lies in that cell.
@@ -728,7 +648,7 @@ YOLOv3's architecture
   bounding box dimensions, called anchor boxes (or bounding box
   priors). It does this by applying the K-Means algorithm to the height and
   width of the training set bounding boxes. 
-  for each grid cell and each anchor box, the network predicts the log of the
+  For each grid cell and each anchor box, the network predicts the log of the
   vertical and horizontal rescaling factors. 
 
 - The network is trained using images of different scales: every few
@@ -790,4 +710,8 @@ technique called super-resolution
 Instance segmentation is similar to semantic segmentation, 
 but instead of merging all objects of the same class into one
 big lump, each object is distinguished from the others. 
+
+
+
+
 

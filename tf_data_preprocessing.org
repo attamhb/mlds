@@ -179,5 +179,166 @@ def train(model, optimizer, loss_fn, n_epochs, [...]):
         optimizer.apply_gradients(zip(grads, model.trainable_variables))
 #+end_src python :result outputs
 
-*  
+* The TFRecord Format
+The TFRecord format is TensorFlow's preferred format for storing large
+amounts of data and reading it efficiently. It is a very simple binary format
+that just contains a sequence of binary records of varying sizes 
+(each record is comprised of a length, a CRC checksum to check that the length
+was not corrupted, then the actual data, and finally a CRC checksum for
+the data). 
 
+#+begin_src python :result outputs
+with tf.io.TFRecordWriter("my_data.tfrecord") as f:
+    f.write(b"This is the first record")
+    f.write(b"And this is the second record")
+filepaths = ["my_data.tfrecord"]
+dataset = tf.data.TFRecordDataset(filepaths)
+for item in dataset:
+    print(item)
+#+end_src
+
+** Compressed TFRecord Files
+#+begin_src python :result outputs
+options = tf.io.TFRecordOptions(compression_type="GZIP")
+with tf.io.TFRecordWriter("my_compressed.tfrecord", options) as f:
+    [...]
+dataset = tf.data.TFRecordDataset(
+                ["my_compressed.tfrecord"],
+                compression_type="GZIP"
+                                  )
+#+end_src
+
+** A Brief Introduction to Protocol Buffers
+TFRecord files usually contain serialized protocol buffers.
+This is a portable, extensible, and efficient binary format developed
+#+begin_src python :result outputs
+syntax = "proto3";
+message Person {
+    string name = 1;
+    int32 id = 2;
+    repeated string email = 3;
+         }
+from person_pb2 import Person # import the generated access class
+person = Person(name="Al", id=123, email=["a@b.com"]) # create a Person
+print(person) # display the Person
+#name: "Al"
+#id: 123
+#email: "a@b.com"
+person.name # read a field
+#"Al"
+person.name = "Alice" # modify a field
+person.email[0] # repeated fields can be accessed like arrays
+#"a@b.com"
+person.email.append("c@d.com") # add an email address
+s = person.SerializeToString() # serialize the object to a byte string
+s
+#b'\n\x05Alice\x10{\x1a\x07a@b.com\x1a\x07c@d.com'
+person2 = Person() # create a new Person
+person2.ParseFromString(s) # parse the byte string (27 bytes long)
+#27
+person == person2 # now they are equal
+#True
+#+end_src
+
+** TensorFlow Protobufs
+#+begin_src python :result outputs
+syntax = "proto3";
+message BytesList { repeated bytes value = 1; }
+message FloatList { repeated float value = 1 [packed = true]; }
+message Int64List { repeated int64 value = 1 [packed = true]; }
+message Feature {
+    oneof kind {
+        BytesList bytes_list = 1;
+        FloatList float_list = 2;
+        Int64List int64_list = 3;
+        }
+}
+message Features { map<string, Feature> feature = 1; };
+message Example { Features features = 1; };
+#+end_src
+
+[packed = true] is used for repeated numerical fields, 
+A Features (with an s) contains a dictionary that maps a feature name to the
+corresponding feature value. 
+And finally, an Example contains only a Features object.8
+#+begin_src python :result outputs
+from tensorflow.train import BytesList, FloatList, Int64List
+from tensorflow.train import Feature, Features, Example
+person_example = Example(
+features=Features(
+    feature={
+        "name": Feature(bytes_list=BytesList(value=[b"Alice"])),
+        "id": Feature(int64_list=Int64List(value=[123])),
+        "emails": Feature(bytes_list=BytesList(value=[b"a@b.com",
+                                                b"c@d.com"]))
+}))
+
+with tf.io.TFRecordWriter("my_contacts.tfrecord") as f:
+f.write(person_example.SerializeToString())
+#+end_src
+
+** Loading and Parsing Examples
+#+begin_src python :result outputs
+feature_description = {
+      "name": tf.io.FixedLenFeature([], tf.string, default_value=""),
+      "id": tf.io.FixedLenFeature([], tf.int64, default_value=0),
+      "emails": tf.io.VarLenFeature(tf.string),
+}
+for serialized_example in tf.data.TFRecordDataset(["my_contacts.tfrecord"]):
+      parsed_example = tf.io.parse_single_example(
+                                            serialized_example,
+                                            feature_description
+                                                   ) 
+
+# The fixed-length features are parsed as regular tensors, 
+# but the variable-length features are parsed as sparse tensors. 
+# is simpler to just access its values:>>> 
+tf.sparse.to_dense(parsed_example["emails"], default_value=b"")
+#<tf.Tensor: [...] dtype=string, numpy=array([b'a@b.com', b'c@d.com'],
+#[...])>
+parsed_example["emails"].values
+#<tf.Tensor: [...] dtype=string, numpy=array([b'a@b.com', b'c@d.com'],
+#[...])>
+
+#A BytesList can contain any binary data you want, including any
+#serialized object. 
+
+# dataset = tf.data.TFRecordDataset(["my_contacts.tfrecord"]).batch(10)
+# for serialized_examples in dataset:
+parsed_examples = tf.io.parse_example(serialized_examples,
+feature_description)
+#+end_src
+
+** Handling Lists of Lists Using the SequenceExample Protobuf
+#+begin_src python :result outputs
+message FeatureList { repeated Feature feature = 1; };
+message FeatureLists { map<string, FeatureList> feature_list = 1; };
+message SequenceExample {
+    Features context = 1;
+    FeatureLists feature_lists = 2;
+};
+#+end_src
+A SequenceExample contains a Features object for the contextual data
+and a FeatureLists object that contains one or more named FeatureList
+objects. 
+
+Each FeatureList contains a list of Feature objects, each
+of which may be a list of byte strings, a list of 64-bit integers, or a list of
+floats (in this example, each Feature would represent a sentence or a
+comment, perhaps in the form of a list of word identifiers). Building a
+SequenceExample, serializing it, and parsing it is similar to building,
+serializing, and parsing an Example, but you must use
+tf.io.parse_single_sequence_example() to parse a single
+SequenceExample or tf.io.parse_sequence_example() to parse a
+batch. Both functions return a tuple containing the context features (as a
+dictionary) and the feature lists (also as a dictionary). If the feature lists
+contain sequences of varying sizes (as in the preceding example), you may
+want to convert them to ragged tensors, using
+tf.RaggedTensor.from_sparse() (see the notebook for the full code):
+parsed_context, parsed_feature_lists =
+tf.io.parse_single_sequence_example(
+serialized_sequence_example, context_feature_descriptions,
+sequence_feature_descriptions)parsed_content =
+tf.RaggedTensor.from_sparse(parsed_feature_lists["content"])
+Now that you know how to efficiently store, load, and parse data, the next
+step is to prepare it so that it can be fed to a neural network.
