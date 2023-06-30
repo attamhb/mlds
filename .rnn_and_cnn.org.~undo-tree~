@@ -1,0 +1,25 @@
+(undo-tree-save-format-version . 1)
+"120db1b7172aa8f00e1a399108e0959c001b4bf4"
+[nil nil nil nil (25758 14782 866621 358000) 0 nil]
+([nil nil ((20 . 24) (16 . 20) (12 . 16) (10 . 12) (8 . 10) (7 . 8) (5 . 7) (4 . 5) (2 . 4) (1 . 2) (t 25758 14782 876149 11000) 1) nil (25758 14795 779619 557000) 0 nil])
+([nil nil ((24 . 25)) nil (25758 14795 779612 166000) 0 nil])
+([nil nil ((#(" 
+" 0 2 (fontified t line-prefix #("  " 0 2 (face org-indent)) wrap-prefix #("   " 0 2 (face org-indent) 2 3 (face org-indent)))) . 7) (undo-tree-id79 . -1) (undo-tree-id80 . -2) (undo-tree-id81 . -2) (undo-tree-id82 . -2) (undo-tree-id83 . -2) (undo-tree-id84 . -2) (undo-tree-id85 . -2) (undo-tree-id86 . -2) (undo-tree-id87 . -2) (undo-tree-id88 . -2) (t 25758 14795 784661 278000)) nil (25758 14803 995802 829000) 0 nil])
+([nil nil ((#("
+" 0 1 (fontified t line-prefix #("  " 0 2 (face org-indent)) wrap-prefix #("  " 0 2 (face org-indent)))) . 7) (undo-tree-id78 . -1)) nil (25758 14803 995794 750000) 0 nil])
+([nil nil ((#("* 
+" 0 1 (fontified t line-prefix "" wrap-prefix #("* " 0 2 (face org-indent)) composition (0 1 [9673]) keymap (keymap) face org-level-1) 1 2 (fontified t line-prefix "" wrap-prefix #("* " 0 2 (face org-indent)) keymap (keymap) face org-level-1) 2 3 (fontified t line-prefix "" wrap-prefix #("* " 0 2 (face org-indent)))) . 7) (undo-tree-id60 . -2) (undo-tree-id61 . -3) (undo-tree-id62 . -3) (undo-tree-id63 . -3) (undo-tree-id64 . -3) (undo-tree-id65 . -3) (undo-tree-id66 . -3) (undo-tree-id67 . -3) (undo-tree-id68 . -3) (undo-tree-id69 . -1) (undo-tree-id70 . -1) (undo-tree-id71 . -1) (undo-tree-id72 . -1) (undo-tree-id73 . -1) (undo-tree-id74 . -1) (undo-tree-id75 . -1) (undo-tree-id76 . -1) (undo-tree-id77 . -3)) nil (25758 14803 995792 376000) 0 nil])
+([nil nil ((#("
+" 0 1 (fontified t line-prefix #("  " 0 2 (face org-indent)) wrap-prefix #("  " 0 2 (face org-indent)))) . 7) (undo-tree-id59 . -1)) nil (25758 14803 995778 463000) 0 nil])
+([nil nil ((#("* 
+" 0 1 (fontified t line-prefix "" wrap-prefix #("* " 0 2 (face org-indent)) composition (0 1 [9673]) keymap (keymap) face org-level-1) 1 2 (fontified t line-prefix "" wrap-prefix #("* " 0 2 (face org-indent)) keymap (keymap) face org-level-1) 2 3 (fontified t line-prefix "" wrap-prefix #("* " 0 2 (face org-indent)))) . 7) (undo-tree-id41 . -2) (undo-tree-id42 . -3) (undo-tree-id43 . -3) (undo-tree-id44 . -3) (undo-tree-id45 . -3) (undo-tree-id46 . -3) (undo-tree-id47 . -3) (undo-tree-id48 . -3) (undo-tree-id49 . -3) (undo-tree-id50 . -1) (undo-tree-id51 . -1) (undo-tree-id52 . -1) (undo-tree-id53 . -1) (undo-tree-id54 . -1) (undo-tree-id55 . -1) (undo-tree-id56 . -1) (undo-tree-id57 . -1) (undo-tree-id58 . -3)) nil (25758 14803 995776 232000) 0 nil])
+([nil nil ((#("
+" 0 1 (fontified t line-prefix #("  " 0 2 (face org-indent)) wrap-prefix #("  " 0 2 (face org-indent)))) . 7) (undo-tree-id40 . -1)) nil (25758 14803 995764 204000) 0 nil])
+([nil nil ((#("* 
+" 0 1 (fontified t line-prefix "" wrap-prefix #("* " 0 2 (face org-indent)) composition (0 1 [9673]) keymap (keymap) face org-level-1) 1 2 (fontified t line-prefix "" wrap-prefix #("* " 0 2 (face org-indent)) keymap (keymap) face org-level-1) 2 3 (fontified t line-prefix "" wrap-prefix #("* " 0 2 (face org-indent)))) . 7) (undo-tree-id22 . -2) (undo-tree-id23 . -3) (undo-tree-id24 . -3) (undo-tree-id25 . -3) (undo-tree-id26 . -3) (undo-tree-id27 . -3) (undo-tree-id28 . -3) (undo-tree-id29 . -3) (undo-tree-id30 . -3) (undo-tree-id31 . -1) (undo-tree-id32 . -1) (undo-tree-id33 . -1) (undo-tree-id34 . -1) (undo-tree-id35 . -1) (undo-tree-id36 . -1) (undo-tree-id37 . -1) (undo-tree-id38 . -1) (undo-tree-id39 . -3)) nil (25758 14803 995761 921000) 0 nil])
+([nil nil ((#("
+" 0 1 (fontified t line-prefix #("  " 0 2 (face org-indent)) wrap-prefix #("  " 0 2 (face org-indent)))) . 7) (undo-tree-id21 . -1)) nil (25758 14803 995749 347000) 0 nil])
+([nil nil ((#("* 
+" 0 1 (fontified t line-prefix "" wrap-prefix #("* " 0 2 (face org-indent)) composition (0 1 [9673]) keymap (keymap) face org-level-1) 1 2 (fontified t line-prefix "" wrap-prefix #("* " 0 2 (face org-indent)) keymap (keymap) face org-level-1) 2 3 (fontified t line-prefix "" wrap-prefix #("* " 0 2 (face org-indent)))) . 7) (undo-tree-id0 . -2) (undo-tree-id1 . -1) (undo-tree-id2 . -1) (undo-tree-id3 . -1) (undo-tree-id4 . -1) (undo-tree-id5 . -1) (undo-tree-id6 . -1) (undo-tree-id7 . -1) (undo-tree-id8 . -1) (undo-tree-id9 . -1) (undo-tree-id10 . -1) (undo-tree-id11 . -1) (undo-tree-id12 . -1) (undo-tree-id13 . -1) (undo-tree-id14 . -1) (undo-tree-id15 . -1) (undo-tree-id16 . -1) (undo-tree-id17 . -1) (undo-tree-id18 . -1) (undo-tree-id19 . -1) (undo-tree-id20 . -3)) nil (25758 14803 995744 8000) 0 nil])
+([nil current ((3 . 5) (t 25758 14804 44986 402000)) nil (25758 14809 153452 475000) 0 nil])
+nil
