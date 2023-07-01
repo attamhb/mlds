@@ -268,3 +268,163 @@ y_pred = model.predict(X_valid)
 # Plot the series
 plot_series(X_valid[0, :, 0], y_valid[0, 0], y_pred[0, 0])
 plt.show()
+###############################################################################
+# Forecasting Several Steps Ahead
+np.random.seed(43)  # not 42, as it would give the first series in the train set
+
+series = generate_time_series(1, n_steps + 10)
+X_new, Y_new = series[:, :n_steps], series[:, n_steps:]
+X = X_new
+for step_ahead in range(10):
+    y_pred_one = model.predict(X[:, step_ahead:])[:, np.newaxis, :]
+    X = np.concatenate([X, y_pred_one], axis=1)
+
+Y_pred = X[:, n_steps:]
+
+
+print("Y_pred.shape:", Y_pred.shape)
+
+
+def plot_multiple_forecasts(X, Y, Y_pred):
+    n_steps = X.shape[1]
+    ahead = Y.shape[1]
+    plot_series(X[0, :, 0])
+    plt.plot(np.arange(n_steps, n_steps + ahead), Y[0, :, 0], "bo-", label="Actual")
+    plt.plot(
+        np.arange(n_steps, n_steps + ahead),
+        Y_pred[0, :, 0],
+        "rx-",
+        label="Forecast",
+        markersize=10,
+    )
+    plt.axis([0, n_steps + ahead, -1, 1])
+    plt.legend(fontsize=14)
+
+
+plot_multiple_forecasts(X_new, Y_new, Y_pred)
+save_fig("forecast_ahead_plot")
+plt.show()
+
+# Now let's use this model to predict the next 10 values. We first need to regenerate the sequences with 9 more time steps
+
+n_steps = 50
+series = generate_time_series(10000, n_steps + 10)
+X_train, Y_train = series[:7000, :n_steps], series[:7000, -10:, 0]
+X_valid, Y_valid = series[7000:9000, :n_steps], series[7000:9000, -10:, 0]
+X_test, Y_test = series[9000:, :n_steps], series[9000:, -10:, 0]
+
+# Now let's predict the next 10 values one by one:
+X = X_valid
+for step_ahead in range(10):
+    y_pred_one = model.predict(X)[:, np.newaxis, :]
+    X = np.concatenate([X, y_pred_one], axis=1)
+
+Y_pred = X[:, n_steps:, 0]
+
+print("Y_pred.shape:", Y_pred.shape)
+
+print("MSE:", np.mean(keras.metrics.mean_squared_error(Y_valid, Y_pred)))
+
+# Let's compare this performance with some baselines: naive predictions
+# and a simple linear model:
+
+
+# take the last time step value, and repeat it 10 times
+Y_naive_pred = np.tile(X_valid[:, -1], 10)
+np.mean(keras.metrics.mean_squared_error(Y_valid, Y_naive_pred))
+
+np.random.seed(42)
+tf.random.set_seed(42)
+
+model = keras.models.Sequential(
+    [keras.layers.Flatten(input_shape=[50, 1]), keras.layers.Dense(10)]
+)
+
+model.compile(loss="mse", optimizer="adam")
+history = model.fit(X_train, Y_train, epochs=20, validation_data=(X_valid, Y_valid))
+
+# Now let's create an RNN that predicts all 10 next values at once:
+np.random.seed(42)
+tf.random.set_seed(42)
+
+model = keras.models.Sequential(
+    [
+        keras.layers.SimpleRNN(20, return_sequences=True, input_shape=[None, 1]),
+        keras.layers.SimpleRNN(20),
+        keras.layers.Dense(10),
+    ]
+)
+
+model.compile(loss="mse", optimizer="adam")
+history = model.fit(X_train, Y_train, epochs=20, validation_data=(X_valid, Y_valid))
+
+
+np.random.seed(43)
+
+series = generate_time_series(1, 50 + 10)
+X_new, Y_new = series[:, :50, :], series[:, -10:, :]
+Y_pred = model.predict(X_new)[..., np.newaxis]
+
+
+plot_multiple_forecasts(X_new, Y_new, Y_pred)
+plt.show()
+
+
+# Now let's create an RNN that predicts the next 10 steps at each time
+# step. That is, instead of just forecasting time steps 50 to 59 based on time
+# steps 0 to 49, it will forecast time steps 1 to 10 at time step 0, then time
+# steps 2 to 11 at time step 1, and so on, and finally it will forecast time
+# steps 50 to 59 at the last time step. Notice that the model is causal: when it
+# makes predictions at any time step, it can only see past time steps.
+
+
+np.random.seed(42)
+
+n_steps = 50
+series = generate_time_series(10000, n_steps + 10)
+X_train = series[:7000, :n_steps]
+X_valid = series[7000:9000, :n_steps]
+X_test = series[9000:, :n_steps]
+Y = np.empty((10000, n_steps, 10))
+for step_ahead in range(1, 10 + 1):
+    Y[..., step_ahead - 1] = series[..., step_ahead : step_ahead + n_steps, 0]
+Y_train = Y[:7000]
+Y_valid = Y[7000:9000]
+Y_test = Y[9000:]
+
+X_train.shape, Y_train.shape
+
+
+np.random.seed(42)
+tf.random.set_seed(42)
+
+model = keras.models.Sequential(
+    [
+        keras.layers.SimpleRNN(20, return_sequences=True, input_shape=[None, 1]),
+        keras.layers.SimpleRNN(20, return_sequences=True),
+        keras.layers.TimeDistributed(keras.layers.Dense(10)),
+    ]
+)
+
+
+def last_time_step_mse(Y_true, Y_pred):
+    return keras.metrics.mean_squared_error(Y_true[:, -1], Y_pred[:, -1])
+
+
+model.compile(
+    loss="mse",
+    optimizer=keras.optimizers.Adam(learning_rate=0.01),
+    metrics=[last_time_step_mse],
+)
+history = model.fit(X_train, Y_train, epochs=20, validation_data=(X_valid, Y_valid))
+
+
+np.random.seed(43)
+
+series = generate_time_series(1, 50 + 10)
+X_new, Y_new = series[:, :50, :], series[:, 50:, :]
+Y_pred = model.predict(X_new)[:, -1][..., np.newaxis]
+
+
+plot_multiple_forecasts(X_new, Y_new, Y_pred)
+plt.show()
