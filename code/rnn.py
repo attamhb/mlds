@@ -6,18 +6,15 @@ import tensorflow as tf
 from tensorflow import keras
 import numpy as np
 from pathlib import Path
-
-# to make this notebook's output stable across runs
-np.random.seed(42)
-tf.random.set_seed(42)
-
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
 mpl.rc("axes", labelsize=14)
 mpl.rc("xtick", labelsize=12)
 mpl.rc("ytick", labelsize=12)
-
+# to make this notebook's output stable across runs
+np.random.seed(42)
+tf.random.set_seed(42)
 
 n_steps = 50
 series = generate_time_series(10000, n_steps + 1)
@@ -25,8 +22,9 @@ X_train, y_train = series[:7000, :n_steps], series[:7000, -1]
 X_valid, y_valid = series[7000:9000, :n_steps], series[7000:9000, -1]
 X_test, y_test = series[9000:, :n_steps], series[9000:, -1]
 
-X_train.shape, y_train.shape
+print("X_train.shape:", X_train.shape)
 
+print("y_train.shape:", y_train.shape)
 
 fig, axes = plt.subplots(nrows=1, ncols=3, sharey=True, figsize=(12, 4))
 for col in range(3):
@@ -52,8 +50,6 @@ plt.show()
 
 # Linear predictions:
 
-# In[8]:
-
 
 np.random.seed(42)
 tf.random.set_seed(42)
@@ -66,13 +62,7 @@ model.compile(loss="mse", optimizer="adam")
 history = model.fit(X_train, y_train, epochs=20, validation_data=(X_valid, y_valid))
 
 
-# In[9]:
-
-
 model.evaluate(X_valid, y_valid)
-
-
-# In[10]:
 
 
 def plot_learning_curves(loss, val_loss):
@@ -90,17 +80,12 @@ plot_learning_curves(history.history["loss"], history.history["val_loss"])
 plt.show()
 
 
-# In[11]:
-
-
 y_pred = model.predict(X_valid)
 plot_series(X_valid[0, :, 0], y_valid[0, 0], y_pred[0, 0])
 plt.show()
 
 
 # ## Using a Simple RNN
-
-# In[12]:
 
 
 np.random.seed(42)
@@ -113,20 +98,11 @@ model.compile(loss="mse", optimizer=optimizer)
 history = model.fit(X_train, y_train, epochs=20, validation_data=(X_valid, y_valid))
 
 
-# In[13]:
-
-
 model.evaluate(X_valid, y_valid)
-
-
-# In[14]:
 
 
 plot_learning_curves(history.history["loss"], history.history["val_loss"])
 plt.show()
-
-
-# In[15]:
 
 
 y_pred = model.predict(X_valid)
@@ -135,8 +111,6 @@ plt.show()
 
 
 # ## Deep RNNs
-
-# In[16]:
 
 
 np.random.seed(42)
@@ -154,20 +128,11 @@ model.compile(loss="mse", optimizer="adam")
 history = model.fit(X_train, y_train, epochs=20, validation_data=(X_valid, y_valid))
 
 
-# In[17]:
-
-
 model.evaluate(X_valid, y_valid)
-
-
-# In[18]:
 
 
 plot_learning_curves(history.history["loss"], history.history["val_loss"])
 plt.show()
-
-
-# In[19]:
 
 
 y_pred = model.predict(X_valid)
@@ -176,8 +141,6 @@ plt.show()
 
 
 # Make the second `SimpleRNN` layer return only the last output:
-
-# In[20]:
 
 
 np.random.seed(42)
@@ -195,20 +158,11 @@ model.compile(loss="mse", optimizer="adam")
 history = model.fit(X_train, y_train, epochs=20, validation_data=(X_valid, y_valid))
 
 
-# In[21]:
-
-
 model.evaluate(X_valid, y_valid)
-
-
-# In[22]:
 
 
 plot_learning_curves(history.history["loss"], history.history["val_loss"])
 plt.show()
-
-
-# In[23]:
 
 
 y_pred = model.predict(X_valid)
@@ -217,8 +171,6 @@ plt.show()
 
 
 # ## Forecasting Several Steps Ahead
-
-# In[24]:
 
 
 np.random.seed(43)  # not 42, as it would give the first series in the train set
@@ -233,13 +185,7 @@ for step_ahead in range(10):
 Y_pred = X[:, n_steps:]
 
 
-# In[25]:
-
-
 Y_pred.shape
-
-
-# In[26]:
 
 
 def plot_multiple_forecasts(X, Y, Y_pred):
@@ -264,8 +210,6 @@ plt.show()
 
 # Now let's use this model to predict the next 10 values. We first need to regenerate the sequences with 9 more time steps.
 
-# In[27]:
-
 
 np.random.seed(42)
 
@@ -278,8 +222,6 @@ X_test, Y_test = series[9000:, :n_steps], series[9000:, -10:, 0]
 
 # Now let's predict the next 10 values one by one:
 
-# In[28]:
-
 
 X = X_valid
 for step_ahead in range(10):
@@ -289,13 +231,7 @@ for step_ahead in range(10):
 Y_pred = X[:, n_steps:, 0]
 
 
-# In[29]:
-
-
 Y_pred.shape
-
-
-# In[30]:
 
 
 np.mean(keras.metrics.mean_squared_error(Y_valid, Y_pred))
@@ -303,16 +239,11 @@ np.mean(keras.metrics.mean_squared_error(Y_valid, Y_pred))
 
 # Let's compare this performance with some baselines: naive predictions and a simple linear model:
 
-# In[31]:
-
 
 Y_naive_pred = np.tile(
     X_valid[:, -1], 10
 )  # take the last time step value, and repeat it 10 times
 np.mean(keras.metrics.mean_squared_error(Y_valid, Y_naive_pred))
-
-
-# In[32]:
 
 
 np.random.seed(42)
@@ -327,8 +258,6 @@ history = model.fit(X_train, Y_train, epochs=20, validation_data=(X_valid, Y_val
 
 
 # Now let's create an RNN that predicts all 10 next values at once:
-
-# In[33]:
 
 
 np.random.seed(42)
@@ -346,9 +275,6 @@ model.compile(loss="mse", optimizer="adam")
 history = model.fit(X_train, Y_train, epochs=20, validation_data=(X_valid, Y_valid))
 
 
-# In[34]:
-
-
 np.random.seed(43)
 
 series = generate_time_series(1, 50 + 10)
@@ -356,16 +282,11 @@ X_new, Y_new = series[:, :50, :], series[:, -10:, :]
 Y_pred = model.predict(X_new)[..., np.newaxis]
 
 
-# In[35]:
-
-
 plot_multiple_forecasts(X_new, Y_new, Y_pred)
 plt.show()
 
 
 # Now let's create an RNN that predicts the next 10 steps at each time step. That is, instead of just forecasting time steps 50 to 59 based on time steps 0 to 49, it will forecast time steps 1 to 10 at time step 0, then time steps 2 to 11 at time step 1, and so on, and finally it will forecast time steps 50 to 59 at the last time step. Notice that the model is causal: when it makes predictions at any time step, it can only see past time steps.
-
-# In[36]:
 
 
 np.random.seed(42)
@@ -383,13 +304,7 @@ Y_valid = Y[7000:9000]
 Y_test = Y[9000:]
 
 
-# In[37]:
-
-
 X_train.shape, Y_train.shape
-
-
-# In[38]:
 
 
 np.random.seed(42)
@@ -416,9 +331,6 @@ model.compile(
 history = model.fit(X_train, Y_train, epochs=20, validation_data=(X_valid, Y_valid))
 
 
-# In[39]:
-
-
 np.random.seed(43)
 
 series = generate_time_series(1, 50 + 10)
@@ -426,16 +338,11 @@ X_new, Y_new = series[:, :50, :], series[:, 50:, :]
 Y_pred = model.predict(X_new)[:, -1][..., np.newaxis]
 
 
-# In[40]:
-
-
 plot_multiple_forecasts(X_new, Y_new, Y_pred)
 plt.show()
 
 
 # # Deep RNN with Batch Norm
-
-# In[41]:
 
 
 np.random.seed(42)
@@ -457,13 +364,8 @@ history = model.fit(X_train, Y_train, epochs=20, validation_data=(X_valid, Y_val
 
 # # Deep RNNs with Layer Norm
 
-# In[42]:
-
 
 from tensorflow.keras.layers import LayerNormalization
-
-
-# In[43]:
 
 
 class LNSimpleRNNCell(keras.layers.Layer):
@@ -487,9 +389,6 @@ class LNSimpleRNNCell(keras.layers.Layer):
         return norm_outputs, [norm_outputs]
 
 
-# In[44]:
-
-
 np.random.seed(42)
 tf.random.set_seed(42)
 
@@ -508,8 +407,6 @@ history = model.fit(X_train, Y_train, epochs=20, validation_data=(X_valid, Y_val
 
 
 # # Creating a Custom RNN Class
-
-# In[45]:
 
 
 class MyRNN(keras.layers.Layer):
@@ -547,9 +444,6 @@ class MyRNN(keras.layers.Layer):
             return outputs
 
 
-# In[46]:
-
-
 np.random.seed(42)
 tf.random.set_seed(42)
 
@@ -567,8 +461,6 @@ history = model.fit(X_train, Y_train, epochs=20, validation_data=(X_valid, Y_val
 
 # # LSTMs
 
-# In[47]:
-
 
 np.random.seed(42)
 tf.random.set_seed(42)
@@ -585,20 +477,11 @@ model.compile(loss="mse", optimizer="adam", metrics=[last_time_step_mse])
 history = model.fit(X_train, Y_train, epochs=20, validation_data=(X_valid, Y_valid))
 
 
-# In[48]:
-
-
 model.evaluate(X_valid, Y_valid)
-
-
-# In[49]:
 
 
 plot_learning_curves(history.history["loss"], history.history["val_loss"])
 plt.show()
-
-
-# In[50]:
 
 
 np.random.seed(43)
@@ -608,16 +491,11 @@ X_new, Y_new = series[:, :50, :], series[:, 50:, :]
 Y_pred = model.predict(X_new)[:, -1][..., np.newaxis]
 
 
-# In[51]:
-
-
 plot_multiple_forecasts(X_new, Y_new, Y_pred)
 plt.show()
 
 
 # # GRUs
-
-# In[52]:
 
 
 np.random.seed(42)
@@ -635,20 +513,11 @@ model.compile(loss="mse", optimizer="adam", metrics=[last_time_step_mse])
 history = model.fit(X_train, Y_train, epochs=20, validation_data=(X_valid, Y_valid))
 
 
-# In[53]:
-
-
 model.evaluate(X_valid, Y_valid)
-
-
-# In[54]:
 
 
 plot_learning_curves(history.history["loss"], history.history["val_loss"])
 plt.show()
-
-
-# In[55]:
 
 
 np.random.seed(43)
@@ -656,9 +525,6 @@ np.random.seed(43)
 series = generate_time_series(1, 50 + 10)
 X_new, Y_new = series[:, :50, :], series[:, 50:, :]
 Y_pred = model.predict(X_new)[:, -1][..., np.newaxis]
-
-
-# In[56]:
 
 
 plot_multiple_forecasts(X_new, Y_new, Y_pred)
@@ -682,8 +548,6 @@ plt.show()
 # X:     0/3   2/5   4/7   6/9   8/11 10/13 .../43 42/45 44/47 46/49
 # Y:     4/13  6/15  8/17 10/19 12/21 14/23 .../53 46/55 48/57 50/59
 # ```
-
-# In[57]:
 
 
 np.random.seed(42)
@@ -718,8 +582,6 @@ history = model.fit(
 #   /10 11 12 13 14 15 16 17 18 19 20 21 22 ... 53 54 55 56 57 58 59
 # ```
 
-# In[58]:
-
 
 np.random.seed(42)
 tf.random.set_seed(42)
@@ -743,8 +605,6 @@ history = model.fit(X_train, Y_train, epochs=20, validation_data=(X_valid, Y_val
 
 # Here is the original WaveNet defined in the paper: it uses Gated Activation Units instead of ReLU and parametrized skip connections, plus it pads with zeros on the left to avoid getting shorter and shorter sequences:
 
-# In[59]:
-
 
 class GatedActivationUnit(keras.layers.Layer):
     def __init__(self, activation="tanh", **kwargs):
@@ -758,9 +618,6 @@ class GatedActivationUnit(keras.layers.Layer):
         return self.activation(linear_output) * gate
 
 
-# In[60]:
-
-
 def wavenet_residual_block(inputs, n_filters, dilation_rate):
     z = keras.layers.Conv1D(
         2 * n_filters, kernel_size=2, padding="causal", dilation_rate=dilation_rate
@@ -768,9 +625,6 @@ def wavenet_residual_block(inputs, n_filters, dilation_rate):
     z = GatedActivationUnit()(z)
     z = keras.layers.Conv1D(n_filters, kernel_size=1)(z)
     return keras.layers.Add()([z, inputs]), z
-
-
-# In[61]:
 
 
 keras.backend.clear_session()
@@ -795,9 +649,6 @@ Y_proba = keras.layers.Conv1D(n_outputs, kernel_size=1, activation="softmax")(z)
 model = keras.models.Model(inputs=[inputs], outputs=[Y_proba])
 
 
-# In[62]:
-
-
 model.compile(loss="mse", optimizer="adam", metrics=[last_time_step_mse])
 history = model.fit(X_train, Y_train, epochs=2, validation_data=(X_valid, Y_valid))
 
@@ -816,8 +667,6 @@ history = model.fit(X_train, Y_train, epochs=2, validation_data=(X_valid, Y_vali
 
 # The dataset is not available in TFDS yet, the [pull request](https://github.com/tensorflow/datasets/pull/361) is still work in progress. Luckily, the data is conveniently available as TFRecords, so let's download it (it might take a while, as it's about 1 GB large, with 3,450,000 training sketches and 345,000 test sketches):
 
-# In[63]:
-
 
 DOWNLOAD_ROOT = "http://download.tensorflow.org/data/"
 FILENAME = "quickdraw_tutorial_dataset_v1.tar.gz"
@@ -826,27 +675,15 @@ filepath = keras.utils.get_file(
 )
 
 
-# In[64]:
-
-
 quickdraw_dir = Path(filepath).parent
 train_files = sorted([str(path) for path in quickdraw_dir.glob("training.tfrecord-*")])
 eval_files = sorted([str(path) for path in quickdraw_dir.glob("eval.tfrecord-*")])
 
 
-# In[65]:
-
-
 train_files
 
 
-# In[66]:
-
-
 eval_files
-
-
-# In[67]:
 
 
 with open(quickdraw_dir / "eval.tfrecord.classes") as test_classes_file:
@@ -856,20 +693,11 @@ with open(quickdraw_dir / "training.tfrecord.classes") as train_classes_file:
     train_classes = train_classes_file.readlines()
 
 
-# In[68]:
-
-
 assert train_classes == test_classes
 class_names = [name.strip().lower() for name in train_classes]
 
 
-# In[69]:
-
-
 sorted(class_names)
-
-
-# In[70]:
 
 
 def parse(data_batch):
@@ -884,9 +712,6 @@ def parse(data_batch):
     lengths = examples["shape"][:, 0]
     labels = examples["class_index"][:, 0]
     return sketches, lengths, labels
-
-
-# In[71]:
 
 
 def quickdraw_dataset(
@@ -907,24 +732,15 @@ def quickdraw_dataset(
     return dataset.prefetch(1)
 
 
-# In[72]:
-
-
 train_set = quickdraw_dataset(train_files, shuffle_buffer_size=10000)
 valid_set = quickdraw_dataset(eval_files[:5])
 test_set = quickdraw_dataset(eval_files[5:])
-
-
-# In[73]:
 
 
 for sketches, lengths, labels in train_set.take(1):
     print("sketches =", sketches)
     print("lengths =", lengths)
     print("labels =", labels)
-
-
-# In[74]:
 
 
 def draw_sketch(sketch, label=None):
@@ -960,8 +776,6 @@ for sketches, lengths, labels in train_set.take(1):
 
 # Most sketches are composed of less than 100 points:
 
-# In[75]:
-
 
 lengths = np.concatenate([lengths for _, lengths, _ in train_set.take(1000)])
 plt.hist(lengths, bins=150, density=True)
@@ -971,9 +785,6 @@ plt.ylabel("density")
 plt.show()
 
 
-# In[76]:
-
-
 def crop_long_sketches(dataset, max_length=100):
     return dataset.map(lambda inks, lengths, labels: (inks[:, :max_length], labels))
 
@@ -981,9 +792,6 @@ def crop_long_sketches(dataset, max_length=100):
 cropped_train_set = crop_long_sketches(train_set)
 cropped_valid_set = crop_long_sketches(valid_set)
 cropped_test_set = crop_long_sketches(test_set)
-
-
-# In[77]:
 
 
 model = keras.models.Sequential(
@@ -1008,20 +816,11 @@ model.compile(
 history = model.fit(cropped_train_set, epochs=2, validation_data=cropped_valid_set)
 
 
-# In[78]:
-
-
 y_test = np.concatenate([labels for _, _, labels in test_set])
 y_probas = model.predict(test_set)
 
 
-# In[79]:
-
-
 np.mean(keras.metrics.sparse_top_k_categorical_accuracy(y_test, y_probas))
-
-
-# In[80]:
 
 
 n_new = 10
@@ -1039,9 +838,6 @@ for index in range(n_new):
     print("Answer: {}".format(class_names[labels[index].numpy()]))
 
 
-# In[81]:
-
-
 model.save("my_sketchrnn")
 
 
@@ -1049,8 +845,6 @@ model.save("my_sketchrnn")
 # _Exercise: Download the [Bach chorales](https://homl.info/bach) dataset and unzip it. It is composed of 382 chorales composed by Johann Sebastian Bach. Each chorale is 100 to 640 time steps long, and each time step contains 4 integers, where each integer corresponds to a note's index on a piano (except for the value 0, which means that no note is played). Train a model—recurrent, convolutional, or both—that can predict the next time step (four notes), given a sequence of time steps from a chorale. Then use this model to generate Bach-like music, one note at a time: you can do this by giving the model the start of a chorale and asking it to predict the next time step, then appending these time steps to the input sequence and asking the model for the next note, and so on. Also make sure to check out [Google's Coconet model](https://homl.info/coconet), which was used for a nice [Google doodle about Bach](https://www.google.com/doodles/celebrating-johann-sebastian-bach)._
 #
 #
-
-# In[82]:
 
 
 DOWNLOAD_ROOT = (
@@ -1065,16 +859,10 @@ filepath = keras.utils.get_file(
 )
 
 
-# In[83]:
-
-
 jsb_chorales_dir = Path(filepath).parent
 train_files = sorted(jsb_chorales_dir.glob("train/chorale_*.csv"))
 valid_files = sorted(jsb_chorales_dir.glob("valid/chorale_*.csv"))
 test_files = sorted(jsb_chorales_dir.glob("test/chorale_*.csv"))
-
-
-# In[84]:
 
 
 import pandas as pd
@@ -1089,15 +877,10 @@ valid_chorales = load_chorales(valid_files)
 test_chorales = load_chorales(test_files)
 
 
-# In[85]:
-
-
 train_chorales[0]
 
 
 # Notes range from 36 (C1 = C on octave 1) to 81 (A5 = A on octave 5), plus 0 for silence:
-
-# In[86]:
 
 
 notes = set()
@@ -1115,8 +898,6 @@ assert max_note == 81
 
 
 # Let's write a few functions to listen to these chorales (you don't need to understand the details here, and in fact there are certainly simpler ways to do this, for example using MIDI players, but I just wanted to have a bit of fun writing a synthesizer):
-
-# In[87]:
 
 
 from IPython.display import Audio
@@ -1168,8 +949,6 @@ def play_chords(chords, tempo=160, amplitude=0.1, sample_rate=44100, filepath=No
 
 # Now let's listen to a few chorales:
 
-# In[88]:
-
 
 for index in range(3):
     play_chords(train_chorales[index])
@@ -1184,8 +963,6 @@ for index in range(3):
 # And we will train the model on windows of 128 notes (i.e., 32 chords).
 #
 # Since the dataset fits in memory, we could preprocess the chorales in RAM using any Python code we like, but I will demonstrate here how to do all the preprocessing using tf.data (there will be more details about creating windows using tf.data in the next chapter).
-
-# In[89]:
 
 
 def create_target(batch):
@@ -1229,8 +1006,6 @@ def bach_dataset(
 
 # Now let's create the training set, the validation set and the test set:
 
-# In[90]:
-
 
 train_set = bach_dataset(train_chorales, shuffle_buffer_size=1000)
 valid_set = bach_dataset(valid_chorales)
@@ -1243,8 +1018,6 @@ test_set = bach_dataset(test_chorales)
 # * We will then feed this data to a small WaveNet-like neural network, composed of a stack of 4 `Conv1D` layers with doubling dilation rates. We will intersperse these layers with `BatchNormalization` layers for faster better convergence.
 # * Then one `LSTM` layer to try to capture long-term patterns.
 # * And finally a `Dense` layer to produce the final note probabilities. It will predict one probability for each chorale in the batch, for each time step, and for each possible note (including silence). So the output shape will be `[batch_size, window_size, 47]`.
-
-# In[91]:
 
 
 n_embedding_dims = 5
@@ -1278,8 +1051,6 @@ model.summary()
 
 # Now we're ready to compile and train the model!
 
-# In[92]:
-
 
 optimizer = keras.optimizers.Nadam(learning_rate=1e-3)
 model.compile(
@@ -1292,8 +1063,6 @@ model.fit(train_set, epochs=20, validation_data=valid_set)
 
 # Once you're satisfied with the performance of the model on the validation set, you can save it and evaluate it one last time on the test set:
 
-# In[93]:
-
 
 model.save("my_bach_model.h5")
 model.evaluate(test_set)
@@ -1304,8 +1073,6 @@ model.evaluate(test_set)
 # Now let's write a function that will generate a new chorale. We will give it a few seed chords, it will convert them to arpegios (the format expected by the model), and use the model to predict the next note, then the next, and so on. In the end, it will group the notes 4 by 4 to create chords again, and return the resulting chorale.
 
 # **Warning**: `model.predict_classes(X)` is deprecated. It is replaced with `np.argmax(model.predict(X), axis=-1)`.
-
-# In[94]:
 
 
 def generate_chorale(model, seed_chords, length):
@@ -1322,16 +1089,12 @@ def generate_chorale(model, seed_chords, length):
 
 # To test this function, we need some seed chords. Let's use the first 8 chords of one of the test chorales (it's actually just 2 different chords, each played 4 times):
 
-# In[95]:
-
 
 seed_chords = test_chorales[2][:8]
 play_chords(seed_chords, amplitude=0.2)
 
 
 # Now we are ready to generate our first chorale! Let's ask the function to generate 56 more chords, for a total of 64 chords, i.e., 16 bars (assuming 4 chords per bar, i.e., a 4/4 signature):
-
-# In[96]:
 
 
 new_chorale = generate_chorale(model, seed_chords, 56)
@@ -1341,8 +1104,6 @@ play_chords(new_chorale)
 # This approach has one major flaw: it is often too conservative. Indeed, the model will not take any risk, it will always choose the note with the highest score, and since repeating the previous note generally sounds good enough, it's the least risky option, so the algorithm will tend to make notes last longer and longer. Pretty boring. Plus, if you run the model multiple times, it will always generate the same melody.
 #
 # So let's spice things up a bit! Instead of always picking the note with the highest score, we will pick the next note randomly, according to the predicted probabilities. For example, if the model predicts a C3 with 75% probability, and a G3 with a 25% probability, then we will pick one of these two notes randomly, with these probabilities. We will also add a `temperature` parameter that will control how "hot" (i.e., daring) we want the system to feel. A high temperature will bring the predicted probabilities closer together, reducing the probability of the likely notes and increasing the probability of the unlikely ones.
-
-# In[97]:
 
 
 def generate_chorale_v2(model, seed_chords, length, temperature=1):
@@ -1362,21 +1123,13 @@ def generate_chorale_v2(model, seed_chords, length, temperature=1):
 #
 # **Please share your most beautiful generated chorale with me on Twitter @aureliengeron, I would really appreciate it! :))**
 
-# In[98]:
-
 
 new_chorale_v2_cold = generate_chorale_v2(model, seed_chords, 56, temperature=0.8)
 play_chords(new_chorale_v2_cold, filepath="bach_cold.wav")
 
 
-# In[99]:
-
-
 new_chorale_v2_medium = generate_chorale_v2(model, seed_chords, 56, temperature=1.0)
 play_chords(new_chorale_v2_medium, filepath="bach_medium.wav")
-
-
-# In[100]:
 
 
 new_chorale_v2_hot = generate_chorale_v2(model, seed_chords, 56, temperature=1.5)
@@ -1384,8 +1137,6 @@ play_chords(new_chorale_v2_hot, filepath="bach_hot.wav")
 
 
 # Lastly, you can try a fun social experiment: send your friends a few of your favorite generated chorales, plus the real chorale, and ask them to guess which one is the real one!
-
-# In[101]:
 
 
 play_chords(test_chorales[2][:64], filepath="bach_test_4.wav")
