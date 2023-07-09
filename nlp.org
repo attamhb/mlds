@@ -1,4 +1,3 @@
-
 * Generating Shakespearean Text Using a Character RNN
 - The Unreasonable Effectiveness of Recurrent Neural Networks, by Andrej Karpathy, 2015 
 - Train an RNN to predict the next character in a sentence. 
@@ -266,143 +265,95 @@ model.compile(loss="sparse_categorical_crossentropy", optimizer="adam")
 model.fit(dataset, epochs=50, callbacks=[ResetStatesCallback()])
 #+end_src
 
-
-
 * Sentiment Analysis
-- IMDb reviews dataset: consists of 50,000 movie reviews in English (25,000 for training, 25,000 for testing) extracted from the famous Internet Movie Database, along with a simple binary target.
-
-- Each review is represented as a NumPy array of integers, where each integer represents a word. 
-
-- All punctuation was removed.
-
-- Words were converted to lowercase and split by spaces
-
+- IMDb reviews dataset: 50,000 movie reviews 
+- Each review represented as a NumPy array of integers 
+- All punctuation removed.
+- lowercase and split by spaces
 - Indexed by frequency (so low integers correspond to frequent words). 
-
-- The integers 0, 1, and 2 are special
 - 1 represents the padding token 
 - 2 represents the start-of-sequence (SSS) token
 - 3 represents unknown words
-
-- In a real project, preprocess the text yourself, by using the same Tokenizer class as used earlier, wit char_level=False 
-
-- When encoding words, it filters out a lot of characters, including most punctuation, line breaks, and tabs
-
-- Can change this by setting the filters argument. 
-
-- Spaces are used to identify word boundaries. 
-
-- This is OK for English and many other scripts.
-
-- In English, spaces are not always the best way to tokenize
-  text: (San Francisco, #ILoveDeepLearning)
-- Unsupervised learning technique to tokenize and detokenize
-  text at the subword level in a language-independent way
+- encoding filters out a lot of characters including  punctuation, line breaks, and tabs
+- tokenize and detokenize text at the subword level 
 - Treat spaces like other characters
-- if your model encounters a word it has never seen before, it can still reasonably guess what it means.
-
-- It may never have seen the word "smartest" during training, but perhaps it learned the word "smart" and it also learned that the suffix “est” means “the most,”
-
-- Other ways of creating subword encodings (e.g., using byte pair encoding).
-
-- Load the original IMDb reviews, as text (byte strings), using TensorFlow Datasets 
+- Load the original IMDb reviews using TensorFlow Datasets 
 - write the preprocessing function
-
-
-- it truncates the reviews, keeping only the first 300 characters
-- it uses regular expressions to replace <br /> tags with spaces, and to replace any characters other than letters and quotes with spaces.
-- For example, the text "Well, I can't<br />" will become "Well I can't".
-- The preprocess() function splits the reviews by the spaces, which returns a ragged tensor, and it converts this ragged tensor to a dense tensor, padding all reviews with the padding
-  token "<pad>" so that they all have the same length.
-
-- Construct the vocabulary:
-
-- This requires going through the whole training set once, applying our preprocess() function, and using a Counter to count the number of occurrences of each word.
-
-- truncate the vocabulary, keeping only the 10,000 most common words:
-
-- Add a preprocessing step to replace each word with its ID
+- Truncates the reviews to first 300 characters
+- it uses regular expressions to replace <br /> tags with spaces.
+- The text "Well, I can't<br />" will become "Well I can't".
+- The preprocess() function splits the reviews by the spaces, which returns a ragged tensor
+- converts this ragged tensor to a dense tensor, padding all reviews with the padding token "<pad>" so that they all have the same length.
+- Construct the vocabulary (all words used in the reviews)
+- Go through the whole training set once
+- Apply preprocess() function and
+- Use a Counter to count the number of occurrences of each word
+- truncate the vocabulary, keeping only the 10,000 most common words
+- Replace each word with its ID
 - Create a lookup table for this, using 1,000 out-of-vocabulary (oov) buckets:
-
-- Note that the words “this,” “movie,” and “was” were found in the table, so their IDs are lower than 10,000,
-
-- the word “faaaaaantastic” was not found, so it was mapped to one of the oov buckets, with an ID greater than or equal to 10,000.
-
 - Create the final training set. 
-
 - batch the reviews
-
-- then convert them to short sequences of words using the preprocess() function
-
-- then encode these words using a simple encode_words() function that uses the table we just built,
-
+- convert them to short sequences of words 
+- encode these words using a simple function 
 - prefetch the next batch
-
-- The first layer is an Embedding layer, which will convert word IDs into embeddings. 
+- The first layer is an Embedding layer
 - The embedding matrix needs to have one row per word ID (vocab_size + num_oov_buckets) and one column per embedding dimension (this example uses 128 dimensions, but this is a hyperparameter). 
-
 - Inputs of the model will be 2D tensors of shape [batch size, time steps]
-
-- the output of the Embedding layer will be a 3D tensor of shape [batch size, time steps, embedding size].
-  
-
-
+- The output of the Embedding layer will be a 3D tensor of shape [batch size, time steps, embedding size].
 #+begin_src python :result outputs
-
 (X_train, y_train), (X_test, y_test) = keras.datasets.imdb.load_data()
 X_train[0][:10]
   #[1, 14, 22, 16, 43, 530, 973, 1622, 1385, 65]
 
-
-  word_index = keras.datasets.imdb.get_word_index()
-  id_to_word = {id_ + 3: word for word, id_ in word_index.items()}
-  for id_, token in enumerate(("<pad>", "<sos>", "<unk>")):
-      id_to_word[id_] = token
-      " ".join([id_to_word[id_] for id_ in X_train[0][:10]])
-  #'<sos> this film was just brilliant casting location scenery story'
-
-
-  import tensorflow_datasets as tfds
-  datasets, info = tfds.load("imdb_reviews", as_supervised=True,
-  with_info=True)
-  train_size = info.splits["train"].num_examples
-
-  def preprocess(X_batch, y_batch):
-      X_batch = tf.strings.substr(X_batch, 0, 300)
-      X_batch = tf.strings.regex_replace(X_batch, b"<br\\s*/?>", b" ")
-
-      X_batch = tf.strings.regex_replace(X_batch, b"[^a-zA-Z']", b" ")
-      X_batch = tf.strings.split(X_batch)
-      return X_batch.to_tensor(default_value=b"<pad>"), y_batch
-    
-
-  from collections import Counter
-  vocabulary = Counter()
-  for X_batch, y_batch in datasets["train"].batch(32).map(preprocess):
-      for review in X_batch:
-          vocabulary.update(list(review.numpy()))
-  #Let’s look at the three most common words:
-  vocabulary.most_common()[:3]
-  #[(b'<pad>', 215797), (b'the', 61137), (b'a', 38564)]
+word_index = keras.datasets.imdb.get_word_index()
+id_to_word = {id_ + 3: word for word, id_ in word_index.items()}
+for id_, token in enumerate(("<pad>", "<sos>", "<unk>")):
+    id_to_word[id_] = token
+    " ".join([id_to_word[id_] for id_ in X_train[0][:10]])
+#'<sos> this film was just brilliant casting location scenery story'
 
 
-  vocab_size = 10000
-  truncated_vocabulary = [
-  word for word, count in vocabulary.most_common()[:vocab_size]
-  ]
+import tensorflow_datasets as tfds
+datasets, info = tfds.load("imdb_reviews", as_supervised=True,
+with_info=True)
+train_size = info.splits["train"].num_examples
 
-  words = tf.constant(truncated_vocabulary)
-  word_ids = tf.range(len(truncated_vocabulary), dtype=tf.int64)
-  vocab_init = tf.lookup.KeyValueTensorInitializer(words, word_ids)
-  num_oov_buckets = 1000
-  table = tf.lookup.StaticVocabularyTable(vocab_init, num_oov_buckets)
-  #We can then use this table to look up the IDs of a few words:
-  table.lookup(tf.constant([b"This movie was faaaaaantastic".split()]))
-  # <tf.Tensor: [...], dtype=int64, numpy=array([[
-  # 22,
-  # 12,
-  # 11,
-  # 10054]])>
+def preprocess(X_batch, y_batch):
+    X_batch = tf.strings.substr(X_batch, 0, 300)
+    X_batch = tf.strings.regex_replace(X_batch, b"<br\\s*/?>", b" ")
+
+    X_batch = tf.strings.regex_replace(X_batch, b"[^a-zA-Z']", b" ")
+    X_batch = tf.strings.split(X_batch)
+    return X_batch.to_tensor(default_value=b"<pad>"), y_batch
+  
+
+from collections import Counter
+vocabulary = Counter()
+for X_batch, y_batch in datasets["train"].batch(32).map(preprocess):
+    for review in X_batch:
+        vocabulary.update(list(review.numpy()))
+#Let’s look at the three most common words:
+vocabulary.most_common()[:3]
+#[(b'<pad>', 215797), (b'the', 61137), (b'a', 38564)]
+
+
+vocab_size = 10000
+truncated_vocabulary = [
+word for word, count in vocabulary.most_common()[:vocab_size]
+]
+
+words = tf.constant(truncated_vocabulary)
+word_ids = tf.range(len(truncated_vocabulary), dtype=tf.int64)
+vocab_init = tf.lookup.KeyValueTensorInitializer(words, word_ids)
+num_oov_buckets = 1000
+table = tf.lookup.StaticVocabularyTable(vocab_init, num_oov_buckets)
+#We can then use this table to look up the IDs of a few words:
+table.lookup(tf.constant([b"This movie was faaaaaantastic".split()]))
+# <tf.Tensor: [...], dtype=int64, numpy=array([[
+# 22,
+# 12,
+# 11,
+# 10054]])>
 
 def encode_words(X_batch, y_batch):
     return table.lookup(X_batch), y_batch
@@ -421,49 +372,24 @@ model.compile(loss="binary_crossentropy", optimizer="adam",
 metrics=["accuracy"])
 history = model.fit(train_set, epochs=5)
 #+end_src
-
 * Masking
-
-- the model will need to learn that the padding tokens should be ignored.
-- simply add mask_zero=True when creating the Embedding layer
-- This means that padding tokens (whose ID is 0) will be ignored by all downstream layers.
-- The way this works is that the Embedding layer creates a mask tensor equal to K.not_equal(inputs, 0) (where K = keras.backend): it is a Boolean tensor with the same shape as the inputs, and it is equal to False anywhere the word IDs are 0, or True otherwise.
-
-- This mask tensor is then automatically propagated by the model to all subsequent layers, as long as the time dimension is preserved.
-
-- So in this example, both GRU layers will receive this mask automatically, but since the second GRU layer does not return sequences (it only returns the output of the last time step), the mask will not be transmitted to the Dense layer.
-
-- Each layer may handle the mask differently, but in general they simply ignore masked time steps (i.e., time steps for which the mask is False).
-
-- For example, when a recurrent layer encounters a masked time step, it simply copies the output from the previous time step.
-
-- If the mask propagates all the way to the output (in models that output sequences, which is not the case in this example), then it will be applied to the losses as well, so the masked time steps will not contribute to the loss (their loss will be 0).
-
-- The LSTM and GRU layers have an optimized implementation for GPUs, based on Nvidia’s cuDNN library. However, this implementation does not support masking. If your model uses a mask, then these layers will fall back to the (much slower) default
-implementation. Note that the optimized implementation also requires you to use the
-default values for several hyperparameters: activation , recurrent_activation ,
-recurrent_dropout , unroll , use_bias , and reset_after .
-
-All layers that receive the mask must support masking (or else an
-exception will be raised). This includes all recurrent layers, as well as the
-TimeDistributed layer and a few other layers. Any layer that supports
-masking must have a supports_masking attribute equal to True. If you
-want to implement your own custom layer with masking support, you
-should add a mask argument to the call() method (and obviously make
-the method use the mask somehow). Additionally, you should set
-self.supports_masking = True in the constructor. If your layer does
-not start with an Embedding layer, you may use the
-keras.layers.Masking layer instead: it sets the mask to
-K.any(K.not_equal(inputs, 0), axis=-1), meaning that time steps
-where the last dimension is full of zeros will be masked out in subsequent
-layers (again, as long as the time dimension exists).
-Using masking layers and automatic mask propagation works best for
-simple Sequential models. It will not always work for more complex
-models, such as when you need to mix Conv1D layers with recurrent layers.
-In such cases, you will need to explicitly compute the mask and pass it to
-the appropriate layers, using either the Functional API or the Subclassing
-API. For example, the following model is identical to the previous model,
-except it is built using the Functional API and handles masking manually:
+- The model will need to learn that the padding tokens should be ignored.
+- simply add mask_zero=True 
+- The way this works is that the Embedding layer creates a mask tensor equal to keras.backend.not_equal(inputs, 0)
+- It is a Boolean tensor with the same shape as the inputs
+- It is equal to False anywhere the word IDs are 0, or True otherwise.
+- This mask tensor is then automatically propagated by the model 
+- GRU layers will receive this mask automatically
+- The second GRU layer does not return sequences, the mask will not be transmitted to the Dense layer.
+- Each layer may handle the mask differently, but in general they simply ignore masked time steps.
+- When a recurrent layer encounters a masked time step, it simply copies the output from the previous time step.
+- If the mask propagates all the way to the output, then it will be applied to the losses as well
+- The masked time steps will not contribute to the loss (their loss will be 0).
+- All layers that receive the mask must support masking.
+- Any layer that supports masking must have a supports_masking attribute equal to True.
+- Using masking layers and automatic mask propagation works best for simple Sequential models.
+- The following model is identical to the previous model, except it is built using the Functional API and handles masking manually
+#+begin_src python :result outputs
 K = keras.backend
 inputs = keras.layers.Input(shape=[None])
 mask = keras.layers.Lambda(lambda inputs: K.not_equal(inputs, 0))(inputs)
@@ -473,29 +399,214 @@ z = keras.layers.GRU(128, return_sequences=True)(z, mask=mask)
 z = keras.layers.GRU(128)(z, mask=mask)
 outputs = keras.layers.Dense(1, activation="sigmoid")(z)
 model = keras.Model(inputs=[inputs], outputs=[outputs])
-After training for a few epochs, this model will become quite good at
-judging whether a review is positive or not. If you use the TensorBoard()
-callback, you can visualize the embeddings in TensorBoard as they are
-being learned: it is fascinating to see words like “awesome” and
+#+end_src
+* Reusing Pretrained Embeddings
+- The TensorFlow Hub project to reuse pretrained model
+- model components are called modules.
+- nnlm-en-dim50 sentence embedding module, 
 
+#+begin_src python :result outputs
 
-“amazing” gradually cluster on one side of the embedding space, while
-words like “awful” and “terrible” cluster on the other side. Some words
-are not as positive as you might expect (at least with this model), such as
-the word “good,” presumably because many negative reviews contain the
-phrase “not good.” It’s impressive that the model is able to learn useful
-word embeddings based on just 25,000 movie reviews. Imagine how good
-the embeddings would be if we had billions of reviews to train on!
-Unfortunately we don’t, but perhaps we can reuse word embeddings
-trained on some other large text corpus (e.g., Wikipedia articles), even if it
-is not composed of movie reviews? After all, the word “amazing”
-generally has the same meaning whether you use it to talk about movies or
-anything else. Moreover, perhaps embeddings would be useful for
-sentiment analysis even if they were trained on another task: since words
-like “awesome” and “amazing” have a similar meaning, they will likely
-cluster in the embedding space even for other tasks (e.g., predicting the
-next word in a sentence). If all positive words and all negative words form
-clusters, then this will be helpful for sentiment analysis. So instead of
-using so many parameters to learn word embeddings, let’s see if we can’t
-just reuse pretrained embeddings.
+import tensorflow_hub as hub model = keras.Sequential([hub.KerasLayer("https://tfhub.dev/google/tf2-preview/nnlm-en- dim50/1",
 
+dtype=tf.string, input_shape=[], output_shape=[50]),
+keras.layers.Dense(128, activation="relu"),
+keras.layers.Dense(1, activation="sigmoid")
+])
+model.compile(loss="binary_crossentropy", optimizer="adam",
+metrics=["accuracy"])
+
+datasets, info = tfds.load("imdb_reviews", as_supervised=True,
+with_info=True)
+train_size = info.splits["train"].num_examples
+batch_size = 32
+train_set = datasets["train"].batch(batch_size).prefetch(1)
+history = model.fit(train_set, epochs=5)
+
+#+end_src 
+
+- This particular module is a sentence encoder
+- It parses the string (splitting words on spaces) and embeds each word using an embedding matrix that was pretrained on a huge corpus
+* An Encoder–Decoder Network for Neural Machine Translation
+- Translate English sentences to French  
+- The English sentences are fed to the encoder
+- The decoder outputs the French translations
+- French translations are also used as inputs to the decoder
+- But shifted back by one step.
+- The decoder is given as input the word that it should have output at the previous step.
+- For first word, it is given the start-of-sequence (SOS) token.
+- The decoder is expected to end the sentence with an end-of-sequence (EOS) token.
+- The English sentences are reversed before they are fed to the encoder.
+- "I drink milk" is reversed to "milk drink I."
+- This ensures that the beginning of the English sentence will be fed last to the encoder
+- Which is useful because that’s generally the first thing that the decoder needs to translate.
+- Each word is initially represented by its ID.
+- An embedding layer returns the word embedding.
+- These word embeddings are what is actually fed to the encoder and the decoder.
+- At each step, the decoder outputs a score for each word in the output vocabulary,
+- then the softmax layer turns these scores into probabilities
+- The word with the highest probability is output.
+- At inference time, you will not have the target sentence to feed to the decoder.
+- Instead, simply feed the decoder the word that it output at the previous step.
+- Regular tensors have fixed shapes, they can only contain sentences of the same length
+- You can use masking to handle this, as discussed earlier.
+- Group sentences into buckets of similar lengths, using padding for the shorter sequences.
+- We want to ignore any output past the EOS token,
+- these tokens should not contribute to the loss.
+- When the output vocabulary is large, outputting a probability for each and every possible word would be terribly slow.
+- *Sampled softmax technique* Look only at the logits output by the model for the correct word and for a random sample of incorrect words, then compute an approximation of the loss based only on these logits.
+- Sampled softmax cannot be used at inference time because it requires knowing the target
+#+begin_src python :result outputs
+import tensorflow_addons as tfa
+encoder_inputs = keras.layers.Input(shape=[None], dtype=np.int32)
+decoder_inputs = keras.layers.Input(shape=[None], dtype=np.int32)
+sequence_lengths = keras.layers.Input(shape=[], dtype=np.int32)
+embeddings = keras.layers.Embedding(vocab_size, embed_size)
+encoder_embeddings = embeddings(encoder_inputs)
+decoder_embeddings = embeddings(decoder_inputs)
+encoder = keras.layers.LSTM(512, return_state=True)
+encoder_outputs, state_h, state_c = encoder(encoder_embeddings)
+
+encoder_state = [state_h, state_c]
+sampler = tfa.seq2seq.sampler.TrainingSampler()
+decoder_cell = keras.layers.LSTMCell(512)
+output_layer = keras.layers.Dense(vocab_size)
+decoder = tfa.seq2seq.basic_decoder.BasicDecoder(decoder_cell, sampler,
+output_layer=output_layer)
+final_outputs, final_state, final_sequence_lengths = decoder(
+decoder_embeddings, initial_state=encoder_state,
+sequence_length=sequence_lengths)
+Y_proba = tf.nn.softmax(final_outputs.rnn_output)
+model = keras.Model(inputs=[encoder_inputs, decoder_inputs,
+sequence_lengths],
+outputs=[Y_proba])
+#+end_src
+
+- Set return_state=True when creating the LSTM layer so that we can get its final hidden state and pass it to the decoder
+- We are using an LSTM cell
+- It actually returns two hidden states, short term and long term
+- During training, it should be the embedding of the previous target token
+- It is often a good idea to start training with the embedding of the target of the previous time step and gradually transition to using the embedding of the actual token that was output at the previous step
+* Bidirectional RNNs
+- A regular recurrent layer only looks at past and present inputs before generating its output.
+- This type of RNN makes sense when forecasting time series, 
+- Run two recurrent layers on the same inputs, one reading the words from left to right and the other reading them from right to left.
+- Then simply combine their outputs at each time step.
+* Beam Search
+- It keeps track of a short list of the k most promising sentences (say, the top three), and at each decoder step it tries to extend them by one word, keeping only the k most likely sentences.
+- The parameter k is called the beam width.
+- 
+#+begin_src python :result outputs
+
+beam_width = 10 decoder = tfa.seq2seq.beam_search_decoder.BeamSearchDecoder(cell=decoder_cell, beam_width=beam_width, output_layer=output_layer) decoder_initial_state = tfa.seq2seq.beam_search_decoder.tile_batch(encoder_state, multiplier=beam_width) outputs, _, _ = decoder(embedding_decoder, start_tokens=start_tokens, end_token=end_token, initial_state=decoder_initial_state) 
+
+#+end_src 
+
+- With all this, you can get good translations for fairly short sentences (especially if you use pretrained word embeddings).
+- Unfortunately, this model will be really bad at translating long sentences.
+- Once again, the problem comes from the limited short-term memory of RNNs.
+- Attention mechanisms are the game-changing innovation that addressed this problem.
+* Attention Mechanisms
+- Allow the decoder to focus on the appropriate words at each time step.
+- This means that the path from an input word to its translation is now much
+  shorter, so the short-term memory limitations of RNNs have much less impact.
+- At each time step, the decoder’s memory cell computes a weighted sum of all these encoder outputs.
+- \alpha(t,i): weight of the ith encoder output at the tth decoder time step
+- The rest of the decoder works just like earlier.
+- \alpha(t,i) are generated by a type of small neural network called an alignment model
+- All the weights for a given decoder time step add up to 1.
+* Visual Attention
+- A convolutional neural network first processes the image and outputs some feature maps
+- Then a decoder RNN equipped with an attention mechanism generates the caption, one word at a time.
+- At each decoder time step (each word), the decoder uses the attention model to focus on just the right part of the image.
+- One extra benefit of attention mechanisms is that they make it easier to understand what led the model to produce its output.
+- This is called explainability.
+- In some applications, explainability is not just a tool to debug a model
+- Attention mechanisms are so powerful that you can actually build state-of- the-art models using only attention mechanisms. 
+* Attention Is All You Need
+- Transformer
+- This architecture was also much faster to train and easier to parallelize.
+- The lefthand part is the encoder:  [batch size, max input sentence length]
+- It encodes each word into as [batch size, max input sentence length, 512].
+- The top part of the encoder is stacked N times.
+- The righthand part is the decoder.
+- During training, it takes the target sentence as input, shifted one time step to the right.
+- It also receives the outputs of the encoder.
+- The top part of the decoder is also stacked N times, and the encoder stack's final outputs are fed to the decoder at each of these N levels.
+- Just like earlier, the decoder outputs a probability for each possible next word, at each time step (its output shape is [batch size, max output sentence length, vocabulary length]).
+- During inference, the decoder cannot be fed targets, so we feed it the previously output words (starting with a start-of-sequence token). 
+- So the model needs to be called repeatedly, predicting one more word at every round.
+- There are two embedding layers, 5 × N skip connections, each of them followed by a layer normalization layer, 2 × N "Feed Forward" modules that are composed of two dense layers each,
+- and finally the output layer is a dense layer using the softmax activation function.
+- All of these layers are time-distributed, so each word is treated independently of all the others.
+- The encoder's Multi-Head Attention layer encodes each word's relationship with every other word in the same sentence, paying more attention to the most relevant ones.
+- This attention mechanism is called self- attention.
+- The decoder’s Masked Multi-Head Attention layer does the same thing, but each word is only allowed to attend to words located before it.
+- the decoder’s upper Multi-Head Attention layer is where the decoder pays attention to the words in the input sentence.
+- The positional embeddings are simply dense vectors that represent the position of a word in the sentence.
+- The nth positional embedding is added to the word embedding of the nth word in each sentence.
+- This gives the model access to each word's position, which is needed because the Multi-Head Attention layers do not consider the order or the position of the words
+- They only look at their relationships.
+- Since all the other layers are time-distributed, they have no way of knowing the position of each word (either relative or absolute).
+- The relative and absolute word positions are important, so we need to give this information to the Transformer somehow, and positional embeddings are a good way to do this.
+* Positional embeddings
+- A positional embedding is a dense vector that encodes the position of a word within a sentence: the ith positional embedding is simply added to the word embedding of the ith word in the sentence.
+
+- These positional embeddings can be learned by the model, but in the paper the authors preferred to use fixed positional embeddings, defined using the sine and cosine functions of different frequencies.
+
+- This solution gives the same performance as learned positional embeddings do, but it can extend to arbitrarily long sentences, which is why it’s favored.
+
+- After the positional embeddings are added to the word embeddings, the rest of the model has access to the absolute position of each word in the sentence because there is a unique positional embedding for each position.
+
+- Moreover, the choice of oscillating functions (sine and cosine) makes it possible for the model to learn relative positions as well.
+
+- 
+  #+begin_src python :result outputs
+
+class PositionalEncoding(keras.layers.Layer):
+    def __init__(self, max_steps, max_dims, dtype=tf.float32, **kwargs):
+        super().__init__(dtype=dtype, **kwargs)
+        if max_dims % 2 == 1: max_dims += 1 # max_dims must be even
+            p, i = np.meshgrid(np.arange(max_steps), np.arange(max_dims //
+2))
+            pos_emb = np.empty((1, max_steps, max_dims))
+            pos_emb[0, :, ::2] = np.sin(p / 10000**(2 * i / max_dims)).T
+            pos_emb[0, :, 1::2] = np.cos(p / 10000**(2 * i / max_dims)).T self.positional_embedding = tf.constant(pos_emb.astype(self.dtype))
+    def call(self, inputs):
+        shape = tf.shape(inputs)
+        return inputs + self.positional_embedding[:, :shape[-2], :shape[-1]]
+# Then we can create the first layers of the Transformer:
+embed_size = 512; max_steps = 500; vocab_size = 10000
+encoder_inputs = keras.layers.Input(shape=[None], dtype=np.int32)
+decoder_inputs = keras.layers.Input(shape=[None], dtype=np.int32)
+embeddings = keras.layers.Embedding(vocab_size, embed_size)
+encoder_embeddings = embeddings(encoder_inputs)
+decoder_embeddings = embeddings(decoder_inputs)
+positional_encoding = PositionalEncoding(max_steps, max_dims=embed_size)
+encoder_in = positional_encoding(encoder_embeddings)
+decoder_in = positional_encoding(decoder_embeddings)
+#+end_src
+
+*  Multi-Head Attention
+- To understand how a Multi-Head Attention layer works, we must first understand the Scaled Dot-Product Attention layer, which it is based on Let’s suppose the encoder analyzed the input sentence “They played chess,” and it managed to understand that the word “They” is the subject and the word “played” is the verb, so it encoded this information in the representations of these words.
+- Now suppose the decoder has already translated the subject, and it thinks that it should translate the verb next.
+- For this, it needs to fetch the verb from the input sentence.
+- This is analog to a dictionary lookup: it’s as if the encoder created a dictionary {“subject”: “They”, “verb”: “played”, …} and the decoder wanted to look up the value that corresponds to the key “verb.
+- ” However, the model does not have discrete tokens to represent the keys (like “subject” or “verb”); it has vectorized representations of these concepts (which it learned during training), so the key it will use for the lookup (called the query) will not perfectly match any key in the dictionary.
+- The solution is to compute a similarity measure between the query and each key in the dictionary, and then use the softmax function to convert these similarity scores to weights that add up to 1.
+- If the key that represents the verb is by far the most similar to the query, then that key’s weight will be close to 1.
+- Then the model can compute a weighted sum of the corresponding values, so if the weight of the “verb” key is close to 1, then the weighted sum will be very close to the representation of the word “played.
+- ” In short, you can think of this whole process as a differentiable dictionary lookup.
+- The similarity measure used by the Transformer is just the dot product, like in Luong attention.
+- In fact, the equation is the same as for Luong attention, except for a scaling factor.
+- The equation is shown in Equation 16-3, in a vectorized form.
+- 
+*  Recent Innovations In Language Models
+
+- The year 2018 has been called the “ImageNet moment for NLP”. 
+- The ELMo paper by Matthew Peters introduced Embeddings from Language Models (ELMo): these are contextualized word embeddings learned from the internal states of a deep bidirectional language model. 
+- The ULMFiT paper by Jeremy Howard and Sebastian Ruder demonstrated the effectiveness of unsupervised pretraining for NLP tasks: the authors trained an LSTM language model using self-supervised learning
+  generating the labels automatically from the data on a huge text corpus, then they fine-tuned it on various tasks.
+- The GPT paper by Alec Radford and other OpenAI researchers also demonstrated the effectiveness of unsupervised pretraining, but this time using a Transformer-like architecture.
+- Just a few months later, in February 2019, Alec Radford, Jeffrey Wu, and other OpenAI researchers published the GPT-2 paper,28 which proposed a very similar architecture, but larger still (with over 1. 5 billion parameters!) 
+- The BERT paper by Jacob Devlin and other Google researchers also demonstrates the effectiveness of self-supervised pretraining on a large corpus, using a similar architecture to GPT but non- masked Multi-Head Attention layers (like in the Transformer’s encoder).
