@@ -1,99 +1,43 @@
 
 * Recurrent Neurons and Layers
-A recurrent neural
-network looks very much like a feedforward neural network, except it also
-has connections pointing backward. 
-
-For a simplest possible
-RNN, composed of one neuron receiving inputs, producing an output, and
-sending that output back to itself, at each
-time step t (frame), this recurrent neuron receives the inputs
-x(t) as well as its own output from the previous time step, y(t-1). 
-
-Since there
-is no previous output at the first time step, it is generally set to 0. 
-*Unrolling The Network Through Time*
-
-
-At each time step t,
-every neuron receives both the input vector x(t) and the output vector from
-the previous time step y(t-1). 
-Each recurrent neuron has two sets of weights: 
-w_x for the inputs x(t) 
-w_y for the outputs of the previous time step y(t-1) 
-
-y_(t) = ϕ(W^T_x x(t) + W_y^T y(t-1) + b)
-
-Y_(t) = ϕ(X_(t) W_x + Y_(t−1) W_y + b)
-= ϕ([X_(t) Y_(t−1)]W+b) with W =[W_x W_y]^T
-
-- Y_(t) is an m × n_neurons matrix containing the layer's outputs at time
-  step t for each instance in the mini-batch (m is the number of
-  instances in the mini-batch and n_neurons is the number of neurons).
-
-- X_(t) is an m × n_inputs matrix containing the inputs for all instances
-  (n_inputs is the number of input features).
-
-- W_x is an n_inputs × n_neurons matrix containing the connection
-  weights for the inputs of the current time step.
-
-- W_y is an n_neurons × n_neurons matrix containing the connection
-  weights for the outputs of the previous time step. 
-
-- b is a vector of size n_neurons containing each neuron's bias term.
-- The weight matrices W_x and W_y are often concatenated vertically
-  into a single weight matrix W of shape 
-   (n_inputs + n_neurons) × n_neurons .
-- [X_(t) Y_(t–1)] represents the horizontal concatenation
-   of the matrices X_(t) and Y_(t-1).
-
-- Y_(t) is a function of X_(t) and Y_(t-1), which is a function of X_(t–1)
-  and Y_(t–2) , and so on. 
-
-- This makes Y_(t) a function of all the inputs since time t = 0.
-
-- At the first time step, t = 0, there are no previous outputs, so they are
-  typically assumed to be all zeros.
+- A recurrent neural network has connections pointing backward.
+- *Unrolling The Network Through Time*
+- At each time step t, every neuron receives both the input vector x_(t) and the output vector from the previous time step y_(t-1).
+- Each recurrent neuron has two sets of weights:
+- w_x for the inputs x_(t) 
+- w_y for the outputs of the previous time step y_(t-1) 
+- y_(t) = ϕ(W^T_x x_(t) + W_y^T y_(t-1) + b) = ϕ([X_(t) Y_(t−1)]W+b) with W = [W_x W_y]^T
+- Y_(t) is an m × n_neurons (m is the number of instances in the mini-batch)
+- X_(t) is an m × n_inputs 
+- W_x is an n_inputs × n_neurons 
+- W_y is an n_neurons × n_neurons 
+- b is a vector of size n_neurons 
+- Y_(t) = f(X_{0}, X_1, ... , X_t) 
 
 * Memory Cells
-The output of a recurrent neuron at time step t is a function of all the inputs
-from previous time steps, it has a form of memory. A
-part of a neural network that preserves some state across time steps is
-called a memory cell. 
-
-A single recurrent neuron, or a layer of recurrent neurons, is a very basic
-cell, capable of learning only short patterns. A cell's state at time step t,
-denoted h_(t), is a function of some inputs at that time step and its state at
-the previous time step: h_(t) = f(h_(t–1), x_(t)).
-
-Its output at time step t, denoted y_(t), is also a function of the previous
-state and the current inputs. 
+- The output of a recurrent neuron at time step t is a function of all the inputs from previous time steps
+- It has a form of memory.
+- A part of a neural network that preserves some state across time steps is called a memory cell.
+- h_(t) = f(h_(t–1), x_(t)).
 
 *  Input and Output Sequences
 
 *Sequence-to-Sequence Network*
-An RNN can simultaneously take a sequence of inputs and produce a
-sequence of outputs. This type of
-sequence-to-sequence network is useful for predicting time series. 
+- An RNN can simultaneously take a sequence of inputs and produce a sequence of outputs. 
 
 *Sequence-to-Vector Network*
-In such networks, we feed the network a sequence of inputs and ignore all outputs except for the last one. 
+- Feed the network a sequence of inputs and ignore all outputs except for the last one. 
 
 *Vector-to-Sequence Network*
-In such networks we feed the network the same input vector over and
-over again at each time step and let it output a sequence. This is a
-vector-to-sequence network. 
-
+- weed the network the same input vector over and over again at each time step and let it output a sequence.
 
 *Encoder–Decoder*
-If we have a sequence-to-vector network, called an encoder,
-followed by a vector-to-sequence network, called a decoder. This two-step
-model, called an Encoder–Decoder. 
+- A sequence-to-vector network, called an encoder, followed by a vector-to-sequence network, called a decoder. 
 
 * Training RNNs
-- To train an RNN, the unroll it through time and then simply use
-  regular backpropagation. This strategy is called backpropagation through 
-  time (BPTT). 
+- To train an RNN, the unroll it through time
+
+- And then simply use regular backpropagation (backpropagation through time (BPTT))
 
 - There is a first forward pass through the unrolled network. 
 
@@ -105,20 +49,11 @@ model, called an Encoder–Decoder.
 
 - Finally the model parameters are updated using the gradients computed during BPTT. 
 
-- since the same parameters W and b are used at each time step,
-  backpropagation will do the right thing and sum over all time steps.
+- wince the same parameters W and b are used at each time step, backpropagation will do the right thing and sum over all time steps.
 
 * Forecasting a Time Series
-- Time series  
--- Univariate time series
--- Multivariate time series. 
-
-*Forcasting:* To predict future values.
-*Imputation:* To fill in the blanks or to predict missing values from the
- past
-
  
-For simplicity, we are using a time series generated by the
+- Using a time series generated by the
 #+begin_src python :result outputs
 def generate_time_series(batch_size, n_steps):
     freq1, freq2, offsets1, offsets2 = np.random.rand(4, batch_size, 1)
@@ -135,75 +70,72 @@ X_valid, y_valid = series[7000:9000, :n_steps], series[7000:9000, -1]
 X_test, y_test = series[9000:, :n_steps], series[9000:, -1]
 
 #+end_src
-The function creates as many time series returning a NumPy array of shape
-[batch size, time steps, 1], where each series is the sum of two sine waves of
-fixed amplitudes but random frequencies and phases, plus a bit of noise.
+
+- The function creates as many time series  of shape [batch size, time steps, 1]
+- Each series is the sum of two sine waves of fixed amplitudes but random frequencies and phases,
+- Plus a bit of noise.
 
 * Baseline Metrics
-The simplest approach is to predict the last value in each series. This is
-called naive forecasting, and it is sometimes surprisingly difficult to
-outperform. In this case, it gives us a mean squared error of about 0.020:
+- Predict the last value in each series (naive forecasting)
+- Sometimes surprisingly difficult to outperform
+- MSE 0.020
+- Alternatively, use a fully connected network
+- Add a Flatten layer
+- Use a simple Linear Regression model
+- Each prediction will is a linear combination of the values in the time series
+- Compile the model using the MSE loss and Adam optimizer
+- Then fit it on the training set for 20 epochs and evaluate it on the validation set
+- MSE = 0.004
+- Much better than the naive approach
 #+begin_src python :result outputs
 y_pred = X_valid[:, -1]
 np.mean(keras.losses.mean_squared_error(y_valid, y_pred))
-0.020211367
-#+end_src
-Another simple approach is to use a fully connected network. Since it
-expects a flat list of features for each input, we need to add a Flatten
-layer. Let's just use a simple Linear Regression model so that each
-prediction will be a linear combination of the values in the time series:
-
-#+begin_src python :result outputs
+#0.020211367
 model = keras.models.Sequential([
     keras.layers.Flatten(input_shape=[50, 1]),
     keras.layers.Dense(1)])
 #+end_src
-If we compile this model using the MSE loss and the default Adam
-optimizer, then fit it on the training set for 20 epochs and evaluate it on
-the validation set, we get an MSE of about 0.004. That's much better than
-the naive approach!
 
 * Implementing a Simple RNN
-Let's see if we can beat that with a simple RNN:
+- RNN with a single layer (single neuron).  
+- No need to specify the length of the input sequences (RNN can process any number of time steps)
+- SimpleRNN layer uses the hyperbolic tangent activation function
+- Initial state h_(init) is set to 0, and it is passed to a single recurrent neuron, along with the value of the first time step, x_(0).
+- The neuron computes a weighted sum of these values and applies the hyperbolic tangent activation function to the result
+- This gives the first output y_0
+- In a simple RNN, this output is also the new state h_0.
+- h_0 is passed to the same neuron along with  x_(1)
+- The process continues until the last time step. 
+- MSE = 0.014
+- Better than the naive approach
+- Does not beat a simple linear model
+- For each neuron, linear model has one parameter per input and per time step, plus a bias term.
+- For each recurrent neuron in a simple RNN, there is one parameter per input and per hidden state dimension, plus a bias term. 
+- In a simple RNN, that's a total of just three parameters.
+
 #+begin_src python :result outputs
 model = keras.models.Sequential([
 keras.layers.SimpleRNN(1, input_shape=[None, 1])
 ])
 #+end_src
-
-It just contains a single layer, with a single neuron. We do not need to specify
-the length of the input sequences, since a recurrent neural network can process
-any number of time steps. By default, the SimpleRNN layer uses the hyperbolic
-tangent activation function.
-
-the initial state h(init) is set
-to 0, and it is passed to a single recurrent neuron, 
-along with the value of the first time step, x(0). 
-The neuron computes a weighted sum of these values and
-applies the hyperbolic tangent activation function to the result, and this gives
-the first output, y_0. 
-In a simple RNN, this output is also the new state h0. 
-This new state is passed to the same recurrent neuron along with the next
-input value, x(1), and the process is repeated until the last time step. 
-
-Then the layer just outputs the last value, y_49. All of this is performed
-simultaneously for every time series.
-
-If you compile, fit, and evaluate this model, you will find that its MSE reaches only 0.014, so
-it is better than the naive approach but it does not beat a simple linear
-model. 
-Note that for each neuron, a linear model has one parameter per
-input and per time step, plus a bias term. In contrast, for each recurrent neuron
-in a simple RNN, there is just one parameter per input and per hidden state
-dimension, plus a bias term. 
-
-In this simple RNN, that's a total of just three
-parameters.
-
 * Deep RNNs
-Implementing a deep RNN with tf.keras is quite simple: just stack
-recurrent layers. In this example, we use three SimpleRNN layers:
+- Use three SimpleRNN layers
+- the last layer is not ideal
+- It must have a single unit for forecasting a univariate time series
+- A single output value per time step
+- Hidden state is just a single number. 
+- Not that useful
+- the RNN uses the hidden states of the other recurrent layers to carry over information.
+- Will not use the final layer's hidden state very much. 
+- What if you want to use another activation function?
+- Replace the output layer with a Dense layer
+- Runs slightly faster
+- The accuracy would be roughly the same
+- Allows us to choose any activation function. 
+- Converges faster and performs just as well
+
 #+begin_src python :result outputs
+
 model = keras.models.Sequential([
 keras.layers.SimpleRNN(
           20, 
@@ -211,41 +143,45 @@ keras.layers.SimpleRNN(
           keras.layers.SimpleRNN(20, return_sequences=True),
           keras.layers.SimpleRNN(1)
 ])
-#+end_src
-Note that the last layer is not ideal: 
-it must have a single unit because we want to forecast a univariate time series,
-and this means we must have a single output value per time step. 
-However, having a single unit means
-that the hidden state is just a single number. 
 
-That's really not much, and
-it's probably not that useful; presumably, the RNN will mostly use the
-hidden states of the other recurrent layers to carry over all the information
-it needs from time step to time step, and it will not use the final layer's
-hidden state very much. 
-
-Moreover, since a SimpleRNN layer uses the tanh activation function by default,
-the predicted values must lie within the range –1 to 1. But what if you want to
-use another activation function? For both these reasons, it might be preferable
-to replace the output layer with a Dense layer: it would run slightly faster,
-the accuracy would be roughly the same, and it would allow us to choose any
-output activation function we want. If you make this change, also make sure to
-remove
-
-#+begin_src pyhton :result outputs
-return_sequences=True from the second (now last) recurrent layer:
 model = keras.models.Sequential([
 keras.layers.SimpleRNN(20, return_sequences=True, input_shape=[None, 1]),
 keras.layers.SimpleRNN(20),
 keras.layers.Dense(1)
 ])
+
 #+end_src
-This model converges faster and performs just as well. 
-and you can change the output activation function if you wanted.
+
 * Forecasting Several Time Steps Ahead
-To predict the next 10 values, the first option is to use the model we already
-trained, make it predict the next value, then add that value to the inputs,
-and use the model again to predict the following value, and so on
+- First option is to use already trained model for a single output
+- Make it predict the next value
+- Add that value to the inputs
+- Use the model again to predict the following value
+- And so on
+- Prediction for next step is more accurate than it is for later time steps
+- The errors might accumulate. 
+- Much higher than the previous models
+- Also a much harder task, so no comparison. 
+- The naive approach is terrible
+- The linear model is much better than using our RNN to forecast the future one step at a time
+- Also much faster to train and run. 
+- The second option is to train an RNN to predict next values at once (sequence-to-vector model)
+- wt will output 10 values instead of 1. 
+- Alternatively, train it to forecast the next 10 values at each and every time step
+- The loss will contain a term for the output of the RNN at each and every time step.
+- Many more error gradients flowing through the model
+- They won't have to flow only through time
+- They will also flow from the output of each time step
+- This stabilize and speed up training.
+- At time step 0 the model output a vector for time steps 1 to 10
+- At time step 1 the model will forecast time steps 2 to 11, and so on. 
+- Targets contain values that appear in the inputs
+- At each time step, the model only knows about past time steps, so it cannot look ahead.
+- It is said to be a causal model.
+- To turn it into a sequence-to-sequence model, set return_sequences=True in all recurrent layers
+- Apply the output Dense layer at every time step.
+- The Dense layer supports sequences as inputs. 
+
 
 #+begin_src python :result outputs
 series = generate_time_series(1, n_steps + 10)
@@ -255,29 +191,8 @@ for step_ahead in range(10):
     y_pred_one = model.predict(X[:, step_ahead:])[:, np.newaxis, :]
     X = np.concatenate([X, y_pred_one], axis=1)
     Y_pred = X[:, n_steps:]
-#+end_src
-the prediction for the next step will usually be more
-accurate than the predictions for later time steps, 
-since the errors might
-accumulate. 
 
-This is much higher than the previous models, 
-but it’s also a much harder task, so the
-comparison doesn’t mean much. 
-
-The naive approach is terrible,
-but the linear model is much better than
-using our RNN to forecast the future one step at a time, and also much
-faster to train and run. 
-
-Still, if you only want to forecast a few time steps
-ahead, on more complex tasks, this approach may work well.
-
-The second option is to train an RNN to predict all 10 next values at once.
-We can still use a sequence-to-vector model, but it will output 10 values
-instead of 1. 
-
-#+begin_src python :result outputs
+# output 10 values at once
 series = generate_time_series(10000, n_steps + 10)
 X_train, Y_train = series[:7000, :n_steps], series[:7000, -10:, 0]
 X_valid, Y_valid = series[7000:9000, :n_steps], series[7000:9000, -10:, 0]
@@ -291,42 +206,16 @@ keras.layers.Dense(10)
 ])
 #After training , you can predict the next 10 values at once very easily:
 Y_pred = model.predict(X_new)
-#+end_src
 
-This model works nicely and is much better than the linear model. 
-To do better, we can train it to forecast the next 10 values at
-each and every time step. 
 
-The advantage of this technique is that the loss will contain a term for the
-output of the RNN at each and every time step. This means there will be many
-more error gradients flowing through the model, and they won't have to flow only
-through time; they will also flow from the output of each time step.
-
-This will both stabilize and speed up training.
-
-At time step 0 the model will output a vector containing the
-forecasts for time steps 1 to 10, 
-
-Then at time step 1 the model will forecast time steps 2 to 11, and so on. 
-
-#+begin_src python :result outputs
+# sequence-to sequence
 Y = np.empty((10000, n_steps, 10)) # each target is a sequence of 10D vectors
 for step_ahead in range(1, 10 + 1):
     Y[:, :, step_ahead - 1] = series[:, step_ahead:step_ahead + n_steps, 0]
     Y_train = Y[:7000]
     Y_valid = Y[7000:9000]
     Y_test = Y[9000:]NOTE
-#+end_src
-
-It may be surprising that the targets will contain values that appear in the
-inputs. At each time step, the model only knows about past time steps,
-so it cannot look ahead. It is said to be a causal model.
-
-To turn the model into a sequence-to-sequence model, we must set
-return_sequences=True in all recurrent layers, and
-we must apply the output Dense layer at every time step. 
-
-#+begin_src python :result outputs
+#
 model = keras.models.Sequential([
           keras.layers.SimpleRNN(
           20, 
@@ -335,69 +224,31 @@ model = keras.models.Sequential([
           keras.layers.SimpleRNN(20, return_sequences=True),
           keras.layers.TimeDistributed(keras.layers.Dense(10))
 ])
-#+end_src
 
-The Dense layer actually supports sequences as inputs. We could
-replace the last layer with just Dense(10). 
-
-#+begin_src python :result outputs
+#
 def last_time_step_mse(Y_true, Y_pred):
     return keras.metrics.mean_squared_error(Y_true[:, -1], Y_pred[:, -1])
 optimizer = keras.optimizers.Adam(lr=0.01)
 model.compile(loss="mse", optimizer=optimizer, metrics= [last_time_step_mse])
 #+end_src
 * Handling Long Sequences
-To train an RNN on long sequences, we must run it over many time steps,
-making the unrolled RNN a very deep network. 
-
-Just like any deep neural network it may suffer from the unstable gradients
-problem it may take forever to train, or training may be unstable.
-
-Moreover, when an RNN processes a long sequence, it will gradually
-forget the first inputs in the sequence. 
+- Run it over many time steps
+- Make the unrolled RNN a very deep network. 
+- May suffer from the unstable gradients problem
+- May be unstable
+- RNN gradually forgets the first inputs in the sequence 
 * Fighting the Unstable Gradients Problem
-Nonsaturating activation functions they may actually lead the RNN to be even
-more unstable during training. Suppose Gradient Descent updates the weights in a
-way that increases the outputs slightly at the first time step. Because the same
-weights are used at every time step, the outputs at the second time step may
-also be slightly increased, and those at the third, and so on until the outputs
-explode—and a nonsaturating activation function does not prevent that.
-
-You can reduce this risk by using a smaller learning rate, but you can
-lso simply use a saturating activation function like the hyperbolic tangent. 
-
-Moreover, Batch Normalization cannot be used as efficiently with RNNs
-as with deep feedforward nets. In fact, you cannot use it between time
-steps, only between recurrent layers. 
-
-To be more precise, it is technically
-possible to add a BN layer to a memory cell so that
-it will be applied at each time step. However, the same BNlayer will be used at each time step, with the same parameters, regardless
-of the actual scale and offset of the inputs and hidden state. 
-
-In practice, this does not yield good results it is found that BN was slightly
-beneficial only when it was applied to the inputs, not to the hidden states. In
-Keras this can be done simply by adding a BatchNormalization layer before each
-recurrent layer, but don’t expect too much from it.
-
-Layer Normalization often works better with RNNs: it is very similar to Batch
-Normalization, but instead of normalizing across the batch dimension, it
-normalizes across the features dimension.
-
-One advantage is that it can compute the required statistics on
-the fly, at each time step, independently for each instance. 
-
-This also means that it behaves the same way during training and testing, and it does not need to use exponential moving averages to estimate
-the feature statistics across all instances in the training set. 
-
-Like BN, Layer Normalization learns a scale and an offset parameter for each
-input. In an RNN, it is typically used right after the linear combination of the
-inputs and the hidden states. 
-
-Let's use tf.keras to implement Layer Normalization within a simple
-memory cell. 
-
-For this, we need to define a custom memory cell. 
+- Nonsaturating activation functions may lead to unstability.
+- Using a smaller learning rate to avoid exploring gradients
+- Alternatively, use a saturating activation function (hyperbolic tangent) 
+- Batch Normalization cannot be used as efficiently with RNNs. 
+- BN was slightly beneficial when applied to the inputs, not to the hidden states
+- In Keras, BatchNormalization layer before each recurrent layer (don’t expect too much) 
+- Layer Normalization works better
+- It normalizes across the features dimension
+- It can compute the required statistics on the fly, at each time step
+- Layer Normalization learns a scale and an offset parameter for each input
+- Typically used right after the linear combination of the inputs and the hidden states 
 
 #+begin_src python :result outputs
 class LNSimpleRNNCell(keras.layers.Layer):
