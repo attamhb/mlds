@@ -1,0 +1,217 @@
+* Transformers – Improving Natural Language Processing with Attention Mechanisms
+
+A new architecture (transformer) outperforms the RNN-based sequence-to-sequence models
+  
+** Attention helps RNNs with accessing information
+
+- Consider the traditional RNN model for a seq2seq task
+
+- RNN parses the whole input sentence before producing the output
+
+- Translating word by word would result in grammatical errors
+
+- RNN trying to remember the entire input sequence via one single hidden unit 
+
+- May cause loss of information for long sequences
+
+- Attention mechanism lets the RNN access all input elements at each given time step
+
+- This can be overwhelming
+
+- Assigns different attention weights to each input element
+
+- To focus on the most relevant elements of the input
+
+- These weights designate how important a given element is 
+
+** The original attention mechanism for RNNs
+
+- Mechanics of the attention mechanism
+
+- Given an input sequence, the attention mechanism assigns a weight to each element and helps the model identify which part of the input it should focus on.
+
+** Processing the inputs using a bidirectional RNN
+- *Example*:
+
+- RNN #1 is a bidirectional RNN that generates context vectors 
+
+- Context vector as an augmented version of the input vector
+
+- Incorporates information from all other input elements (attention mechanism)
+
+- RNN #2 uses context vector to generate the outputs
+
+- The bidirectional RNN #1 processes the input sequence in the regular forward direction as well as backward
+
+- Parsing a sequence in the backward direction has the same effect as reversing the original input sequence
+
+- Current inputs may have a dependence on sequence elements that came either before or after it in a sentence, or both
+
+- Thus captures additional information since 
+
+- Two hidden states for each input sequence element.
+
+- The two hidden states are then concatenated
+
+- Concatenated hidden state as the "annotation" of the source word 
+
+** Generating outputs from context vectors
+
+- RNN #2 is generating the outputs
+ 
+- The hidden states and context vectors as input
+
+- Compute the context vector of the ith input as a weighted sum
+
+- ith input element has a unique attention weights
+
+- The hidden state depends on the (1) previous hidden state, (2) the previous target word, and (3) the context vector
+
+- Used to generate the predicted output for target word
+
+- During training, the true label (word) is fed into the next state
+
+- True label information is not available for prediction (inference)
+
+- Feed the predicted output instead
+
+- The attention-based RNN consists of two RNNs.
+
+** Computing the attention weights
+
+- These weights pairwise connect the inputs (annotations) and the outputs (contexts)
+
+- Each attention weight has two subscripts
+
+- j: input index position 
+
+- i: output index position
+
+- The attention weight is a normalized version of the alignment score
+
+- the alignment score evaluates how well the input around position j matches with the output at position i.
+
+- The attention weight is computed by normalizing the alignment scores as follows:
+
+- Attention-based RNN model can be structured into three parts.
+
+- The first part computes bidirectional annotations of the input.
+
+- The second part (recurrent block) uses context vectors instead of the original input.
+
+- The third part concerns the computation of the attention weights and context vectors (relationship between pair of input and output elements).
+
+- The transformer architecture relies on the self-attention mechanism.
+
+- The transformer architecture does not include the recurrent process found in the RNN.
+
+- A transformer model processes the whole input sequence all at once instead of reading and processing the sequence one element at a time.
+** Introducing the self-attention mechanism
+
+- Attention mechanisms can help RNNs with remembering context when working with long sequences.
+
+- We can have an architecture entirely based on attention, without the recurrent parts of an RNN.
+
+- This attention-based architecture is known as transformer.
+
+- Self-attention mechanism used in transformers.
+
+- Self-attention mechanism is just a different flavor of the attention mechanism.
+
+- Attention mechanism as an operation that connects two different modules (the encoder and decoder of the RNN).
+
+- Self-attention focuses only on the input and captures only dependencies between the input elements, without connecting two modules.
+** Starting with a basic form of self-attention
+
+- Consider an input sequence of length T, as well as an output sequence.
+
+- *x*: an input of length T
+
+- *o:* the final output of the whole transformer model.
+
+- *z:* the output of the self-attention layer
+
+- Each ith element in these sequences are vectors of size d representing the feature information for the input at position i, which is similar to RNNs.
+
+- The goal of self-attention is to model the dependencies of the current input element to all other input elements.
+
+- Self-attention mechanisms are composed of three stages.
+
+- Derive importance weights based on the similarity between the current element and all other elements in the sequence.
+
+- Second, normalize the weights.
+
+- Third, use these weights in combination with the corresponding sequence elements to compute the attention value.
+
+- The output of self-attention is the weighted sum of all T input sequences.
+
+- Think of *z* as a context-aware embedding vector in input vector *x* that involves all other input sequence elements weighted by their respective attention weights.
+
+- The attention weights are computed based on the similarity between the current input element and all other elements in the input sequence.
+
+- This similarity is computed in two steps.
+
+- First, we compute the dot product between the current input element, and another element in the input sequence.
+** Parameterizing the self-attention mechanism: scaled dot-product attention 
+
+- Scaled dot-product attention
+
+- Used in the transformer architecture
+
+- To make the self-attention more flexible, introduce three additional weight matrices.
+
+- *U_q*
+ 
+- *U_k*
+
+- *U_v*
+
+- Query Sequence:   q^{i} = U_q x^{(i)}
+- Key Sequence: k^{i} = U_k x^{(i)}
+- Value Sequence: v^{i} = U_v x^{(i)}
+
+- 
+** Attention is all we need: introducing the original transformer architecture 
+- The original transformer architecture is based on an attention mechanism that was first used in an RNN.
+
+- The intention behind using an attention mechanism was to improve the text generation capabilities of RNNs when working with long sentences.
+
+- Attention-based language model was even more powerful when the recurrent layers were deleted.
+
+- A transformer model can capture long-range dependencies among the elements in an input sequence.
+
+- Transformer architecture can be generalized to other tasks such as English constituency parsing, text generation, and text classification.
+
+- The encoder receives the original sequential input and encodes the embeddings using a multi-head self-attention module.
+
+- The decoder takes in the processed input and outputs the resulting sequence (for instance, the translated sentence) using a masked form of self-attention.
+
+**  Encoding context embeddings via multi-head attention
+
+- The overall goal of the encoder block is to take in a sequential input and map it into a continuous representation that is then passed on to the decoder.
+
+- The encoder is a stack of six identical layers.
+
+- Inside each of these identical layers, there are two sublayers.
+
+- One computes the multi-head self-attention, and the other one is a fully connected layer.
+
+- Multi-head self-attention is a simple modification of scaled dot-product attention.
+
+- In the scaled dot-product attention, we used three matrices (corresponding to query, value, and key) to transform the input sequence.
+
+- In the context of multi-head attention, we can think of this set of three matrices as one attention head.
+
+- We now have multiple of such heads (sets of query, value, and key matrices) similar to how convolutional neural networks can have multiple kernels.
+
+- First, we read in the sequential input.
+
+- Suppose each element is embedded by a vector of length d.
+
+- Then, we create sets of the query, key, and value learning parameter matrices
+
+- Multi-head self-attention is repeating the scaled dot-product attention computation multiple times in parallel and combining the results.
+
+- It works very well in practice because the multiple heads help the model to capture information from different parts of the input, which is very similar to how the multiple kernels produce multiple channels in a convolutional network, where each channel can capture different feature information.
+
+- Lastly, while multi-head attention sounds computationally expensive, note that the computation can all be done in parallel because there are no dependencies between the multiple heads.
