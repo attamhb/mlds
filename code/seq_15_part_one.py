@@ -4,10 +4,13 @@ import torch.nn as nn
 
 
 torch.manual_seed(1)
-rnn_layer = nn.RNN(input_size=5,
-                   hidden_size=2,
-                   num_layers=1,
-                   batch_first=True)
+
+rnn_layer = nn.RNN(
+    input_size=5,
+    hidden_size=2,
+    num_layers=1,
+    batch_first=True,
+)
 
 w_xh = rnn_layer.weight_ih_l0
 w_hh = rnn_layer.weight_hh_l0
@@ -21,13 +24,14 @@ print("b_hh shape:", b_hh.shape)
 
 
 x_seq = torch.tensor([[1.0] * 5, [2.0] * 5, [3.0] * 5]).float()
+print(x_seq)
 
-## output of the simple RNN:
+# output of the simple RNN:
 output, hn = rnn_layer(torch.reshape(x_seq, (1, 3, 5)))
 print(output)
 print(hn)
 
-## manually computing the output:
+# manually computing the output:
 out_man = []
 for t in range(3):
     xt = torch.reshape(x_seq[t], (1, 5))
