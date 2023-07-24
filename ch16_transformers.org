@@ -216,7 +216,6 @@ A new architecture (transformer) outperforms the RNN-based sequence-to-sequence 
 
 - Lastly, while multi-head attention sounds computationally expensive, note that the computation can all be done in parallel because there are no dependencies between the multiple heads.
 
-  
 ** Building large-scale language models by leveraging unlabeled data
 A common theme among these transformers: pre-trained on very large, unlabeled datasets and then fine-tuned for their respective target tasks. 
 
