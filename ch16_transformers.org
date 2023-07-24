@@ -152,7 +152,7 @@ A new architecture (transformer) outperforms the RNN-based sequence-to-sequence 
 - This similarity is computed in two steps.
 
 - First, we compute the dot product between the current input element, and another element in the input sequence.
-** Parameterizing the self-attention mechanism: scaled dot-product attention 
+** scaled dot-product attention 
 
 - Scaled dot-product attention
 
@@ -186,7 +186,7 @@ A new architecture (transformer) outperforms the RNN-based sequence-to-sequence 
 
 - The decoder takes in the processed input and outputs the resulting sequence (for instance, the translated sentence) using a masked form of self-attention.
 
-**  Encoding context embeddings via multi-head attention
+** Encoding context embeddings via multi-head attention
 
 - The overall goal of the encoder block is to take in a sequential input and map it into a continuous representation that is then passed on to the decoder.
 
@@ -215,3 +215,162 @@ A new architecture (transformer) outperforms the RNN-based sequence-to-sequence 
 - It works very well in practice because the multiple heads help the model to capture information from different parts of the input, which is very similar to how the multiple kernels produce multiple channels in a convolutional network, where each channel can capture different feature information.
 
 - Lastly, while multi-head attention sounds computationally expensive, note that the computation can all be done in parallel because there are no dependencies between the multiple heads.
+
+  
+** Building large-scale language models by leveraging unlabeled data
+A common theme among these transformers: pre-trained on very large, unlabeled datasets and then fine-tuned for their respective target tasks. 
+
+
+*** Pre-training and fine-tuning transformer models
+
+Language translation: a supervised task
+Requires a labeled dataset (expensive) 
+
+A trick (Self-Supervised Learning or Unsupervised Pre-Training): 
+Generate "labels" from supervised learning from plain text itself  
+
+Main idea of pre-training: make use of plain text and then transfer and fine-tune the model to perform some specific tasks
+
+Two parts: 
+Pre-training on a large, unlabeled dataset 
+Training the model for a downstream tasks 
+
+Two strategies for transferring:
+
+A feature-based approach (Uses the pre-trained representations ) 
+eg. ELMo
+
+A fine-tuning approach (Updates the pre-trained model parameters) 
+eg.BERT
+
+
+
+[[./nlp_image.png]]
+image taken from Machine Learning with Scikit-Learn and Pytorch 
+by Sebastian Raschka
+
+
+#+begin_src elisp :result outputs
+
+(setq org-startup-with-inline-images t)
+
+
+#+end_src
+
+*** Leveraging unlabeled data with GPT
+
+GPT-1: 
+ Pre-training on a large amount of unlabeled plain text  
+ Supervised fine-tuning 
+ 
+
+During pre-training, it utilizes a transformer decoder structure 
+It utilizes a unidirectional self-attention mechanism
+It produces words one by one with a natural left-to-right direction.
+During training: feed the correct words from previous positions 
+During inference: feed the words it has generated 
+
+
+After the pre-training, insert it between the input pre-processing block and a linear layer
+
+For classification: Tokenize the input and then feed it into the pre-trained model and the newly added linear layer
+
+Then a softmax activation function
+
+For question answering, inputs are organized not necessarily match the pre-trained model
+
+GPT-2: It does not require any additional modification during the input or fine-tuning stages anymore.
+
+contexts:  Modeling output probabilities conditioned on both input and task type
+
+GPT-3: It shifts the focus from zero to one-shot and few-shot learning via in-context learning
+
+*** Using GPT-2 to generate new text
+*** Bidirectional pre-training with BERT 
+BERT (Bidirectional Encoder Representations from Transformers)
+
+The encoding of a certain word depends on both the preceding and the succeeding words
+
+Ability to generate a sentence word by word but provides input encodings of higher quality for other tasks
+
+Positional Encodings:  Token Embeddings, Segment Embedding 
+Segment Embedding is need for for next-sentence prediction
+
+Pre-training task: Each training example includes two sentences.
+
+
+BERT has two training stages: 
+pre-training and fine-tuning. 
+
+Pre-training includes two unsupervised tasks: 
+masked language modeling and 
+next-sentence prediction
+
+In the masked language model tokens are randomly replaced and the model is required to predict these hidden words. 
+
+MLM in BERT is more akin to "filling in the blanks" because the model can attend to all tokens in the sentence. 
+
+15 percent of the words in BERT are marked for masking
+
+These 15 percent of randomly selected words are then further treated as follows: 
+
+1. Keep the word unchanged 10 percent of the time 
+
+2. Replace the original word token with a random word 10 percent of the time 
+
+3. Replace the original word token with a mask token 80 percent of the time 
+
+Unchanged words include the possibility of maintaining the information of the original token 
+
+The 10 percent random words prevent the model from becoming lazy. 
+
+The model is given two sentences, A and B, in the following format
+
+ [CLS] A [SEP] B [SEP] 
+
+[CLS]: a classification token
+[SEP]: denotes the end of each sentence
+
+Task: Classify whether B is the next sentence of A or not
+
+BERT can be fine-tuned on four categories of tasks:
+
+(a) Sentence pair classification
+(b) Single-sentence classification
+(c) Question answering
+(d) Single-sentence tagging
+*** The best of both worlds: BART 
+ 
+GPT utilizes a transformer's decoder structure
+BERT utilizes a transformer's encoder structure
+
+GPT's specialty is generating text
+BERT performs better on classification tasks
+
+BART: a generalization of both GPT and BERT
+
+The model comes with a bidirectional encoder as well as a left-to-right autoregressive decoder 
+
+BART works with different model inputs
+
+The input format was generalized such that it only uses the source
+sequence as input.
+
+Plain text input first "corrupted" and then encoded 
+
+Input encodings  passed to the decoder  with the generated
+tokens
+
+Replacing the former with corrupted text and the latter with the input text itself
+
+
+BART provides the following corruption methods
+
+Token masking
+Token deletion
+Text infilling
+Sentence permutation
+Document rotation
+
+*** Fine-tuning a BERT model in PyTorch
+
