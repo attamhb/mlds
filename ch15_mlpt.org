@@ -1,3 +1,4 @@
+;; thes notes are based on Sebastian Rascka ML with pytorch book
 * Modeling Sequential Data Using Recurrent Neural Networks
 - Introducing sequential data
 - RNNs for modeling sequences
@@ -15,11 +16,7 @@
 
 - Elements in a sequence appear in a certain order and are not independent of each other.
 
-- (Supervised learning) the input IID data
-
-- The training examples are mutually independent and have the same underlying distribution.
-
-- The order in which the training examples are given to the model is irrelevant.
+- (Supervised learning) the input are IID data The training examples are mutually independent and have the same underlying distribution. The order in which the training examples are given to the model is irrelevant.
 
 - This assumption is not valid when we deal with sequences—by definition, order matters.
 
@@ -34,7 +31,6 @@
 - Not all sequential data has the time dimension (text data or DNA sequences).
 
 ** Representing sequences
-
 - RNNs are designed for modeling sequences and are capable of remembering past information and processing new events accordingly. 
 ** The different categories of sequence modeling
 
@@ -104,7 +100,6 @@
 
 - Manually compute the forward pass for one of these recurrent types.
 
-
 *  The challenges of learning long-range interactions
 
 - BPTT introduces some new challenges
@@ -113,9 +108,9 @@
 
 - Three solutions (Gradient clipping. TBPTT,LSTM)
 
--- Gradient clipping: Specify threshold value for the gradients
--- TBPTT: limit the number of time steps for backpropagation 
--- LSTM: successful in vanishing and exploding gradient problems 
+- Gradient clipping: Specify threshold value for the gradients
+- TBPTT: limit the number of time steps for backpropagation 
+- LSTM: successful in vanishing and exploding gradient problems 
 
 ** Long short-term memory cells (LSTM)
 - LSTMs were first introduced to overcome the vanishing gradient problem
@@ -138,7 +133,6 @@
 
 - Three different types of gates (forget gate, input gate, the output gate).
 
-*  Truncated backpropagation through time
 *  Implementing a multilayer RNN for sequence modeling in PyTorch
 - Sentiment analysis
 - Language modeling
@@ -146,7 +140,122 @@
 ** Intro 
 - Implement a multilayer RNN for sentiment analysis 
 
-- Import the necessary modules and read the data from torchtext.
+- Import the necessary modules 
+  #+begin_src python :result outputs
+import re
+from torchtext.datasets import IMDB
+from torch.utils.data.dataset import random_split
+import torch
+import torch.nn as nn
+import sys
+from torchtext.vocab import vocab
+from pkg_resources import parse_version
+from collections import Counter, OrderedDict
+from torchtext import __version__ as torchtext_version
+from torch.utils.data import DataLoader
+#+end_src
+
+
+The following functions will remove the HTML symbols, emojis. 
+It will also convert the capital letters into lower case letters.
+Then it will tokenize the text on world level.
+  
+#+begin_src python :result outputs
+def tokenizer(text):
+    text = re.sub("<[^>]*>", "", text)
+    emoticons = re.findall("(?::|;|=)(?:-)?(?:\)|\(|D|P)", text.lower())
+    text = re.sub("[\W]+", " ", text.lower()) + " ".join(emoticons).replace("-", "")
+    tokenized = text.split()
+    return tokenized
+#+end_src
+
+#+begin_src python :result outputs
+def collate_batch(batch):
+    label_list, text_list, lengths = [], [], []
+    for _label, _text in batch:
+        label_list.append(label_pipeline(_label))
+        processed_text = torch.tensor(text_pipeline(_text), dtype=torch.int64)
+        text_list.append(processed_text)
+        lengths.append(processed_text.size(0))
+    label_list = torch.tensor(label_list)
+    lengths = torch.tensor(lengths)
+    padded_text_list = nn.utils.rnn.pad_sequence(text_list, batch_first=True)
+    return padded_text_list.to(device), label_list.to(device), lengths.to(device)
+#+end_src
+
+#+begin_src python :result outputs
+def train(dataloader):
+    model.train()
+    total_acc, total_loss = 0, 0
+    for text_batch, label_batch, lengths in dataloader:
+        optimizer.zero_grad()
+        pred = model(text_batch, lengths)[:, 0]
+        loss = loss_fn(pred, label_batch)
+        loss.backward()
+        optimizer.step()
+        total_acc += ((pred >= 0.5).float() == label_batch).float().sum().item()
+        total_loss += loss.item() * label_batch.size(0)
+    return total_acc / len(dataloader.dataset), total_loss / len(dataloader.dataset)
+#+end_src
+
+#+begin_src python :result outputs
+def evaluate(dataloader):
+    model.eval()
+    total_acc, total_loss = 0, 0
+    with torch.no_grad():
+        for text_batch, label_batch, lengths in dataloader:
+            pred = model(text_batch, lengths)[:, 0]
+            loss = loss_fn(pred, label_batch)
+            total_acc += ((pred >= 0.5).float() == label_batch).float().sum().item()
+            total_loss += loss.item() * label_batch.size(0)
+    return total_acc / len(dataloader.dataset), total_loss / len(dataloader.dataset)
+#+end_src
+
+**  test train split
+We import  the dataset as the following:
+
+#+begin_src python :result outputs
+train_dataset = IMDB(split="train")
+test_dataset = IMDB(split="test")
+train_dataset, valid_dataset = random_split(list(train_dataset), [20000, 5000])
+
+
+token_counts = Counter()
+for label, line in train_dataset:
+    tokens = tokenizer(line)
+    token_counts.update(tokens)
+#+end_src
+
+Map each unique word to a unique integer. 
+
+A Python dictionary, with keys as the unique tokens and the value associated with each key is a unique integer.
+
+Vocab creates such a mapping and encode the entire dataset
+
+Create a vocab object by passing the ordered dictionary mapping tokens to their corresponding occurrence frequencies (the ordered dictionary is the sorted token_counts). 
+
+Second, we will prepend two special tokens to the vocabulary – the padding and the unknown token:
+
+#+begin_src python :result outputs
+print("Vocab-size:", len(token_counts))
+sorted_by_freq_tuples = sorted(token_counts.items(), key=lambda x: x[1], reverse=True)
+ordered_dict = OrderedDict(sorted_by_freq_tuples)
+vocab = vocab(ordered_dict)
+vocab.insert_token("<pad>", 0)
+vocab.insert_token("<unk>", 1)
+vocab.set_default_index(1)
+print([vocab[token] for token in ["this", "is", "an", "example"]])
+
+## Step 3-A: define the functions for transformation
+
+device = torch.device("cpu")
+
+text_pipeline = lambda x: [vocab[token] for token in tokenizer(x)]
+label_pipeline = lambda x: 1.0 if x == 2 else 0.0
+# 1 ~ negative, 2 ~ positive review
+
+
+#+end_src
 
 - Train and Test: Each set has 25,000 samples.
 
