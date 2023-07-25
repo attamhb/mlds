@@ -1,0 +1,166 @@
+
+* Representation Learning and Generative Learning Using Autoencoders and GANs
+
+*Autoencoders*: 
+Capable of learning dense representations of data
+Lower dimensionality (Visualization)
+Feature detectors  (Unsupervised pretraining) 
+Generative models(Generate new data) 
+
+*Generative adversarial networks:*
+https://thispersondoesnotexist.com/
+https://thisrentaldoesnotexist.com/ 
+
+Two neural networks:
+Generator 
+Discriminator 
+
+* Efficient Data Representations
+An autoencoder looks at the inputs converts them to an efficient latent representation and then spits out something that looks very close to the inputs. 
+
+Two parts: 
+encoder (converts the inputs to a latent representation) 
+decoder (converts the internal representation to the outputs) 
+
+outputs = reconstructions 
+
+cost function contains a reconstruction loss 
+that penalizes the model when the reconstructions are different from the inputs. 
+
+Undercomplete autoencoder 
+(dim(internal representatio) < dim(data)) 
+
+Cannot trivially copy its inputs to the codings
+Must find a way to output a copy of its inputs
+
+* PCA with an Undercomplete Linear Autoencoder 
+
+Linear activations
+Cost function: MSE
+
+
+* Stacked Autoencoders
+Multiple hidden layers (deep autoencoders)
+Symmetrical architecture  with regard to the central hidden layer 
+
+* Implementing a Stacked Autoencoder Using Keras
+
+Split the autoencoder model into two submodels: 
+the encoder and the decoder. 
+
+The encoder:
+Input 28 x 28–pixel grayscale images flatten them
+Two Dense layers of diminishing sizes using the SELU activation 
+Output a vector
+
+The decoder: 
+Input the output of the encoder
+Two Dense layers of increasing sizes 
+Reshape the final vectors to output the same shape dimensionality  
+
+Compiling: 
+Use the binary cross-entropy loss 
+Train the model using the same training set for the target set as well
+
+
+* Visualizing the Reconstructions
+
+
+* Visualizing the Fashion MNIST Dataset
+Use the trained stacked autoencoder to reduce the dataset's dimensionality
+
+Can handle large datasets
+
+Strategy: 
+Use an autoencoder to reduce the dimensionality 
+Use another dimensionality reduction algorithm for visualization 
+
+Use the encoder from our stacked autoencoder to reduce the dimensionality down to 30
+then we use  t-SNE algorithm to reduce the dimensionality down to 2 for visualization
+
+* Unsupervised Pretraining Using Stacked Autoencoders
+Not a lot of labeled training data
+Solution:  
+Find a neural network that performs a similar task and reuse its lower layers.
+
+Just train an autoencoder using all the training data (labeled plus unlabeled)
+
+Then reuse its encoder layers to create a new neural network.
+
+ 
+* Tying Weights 
+For a neatly symmetrical autoencoder:
+
+Tie the weights of the decoder layers to the weights of the encoder layers
+
+halves the number of weights in the model
+speed up training 
+limiting the risk of overfitting 
+
+* Training One Autoencoder at a Time
+Train one shallow autoencoder at a time
+Then stack all of them into a single stacked autoencoder 
+
+First phase: reconstruct the inputs
+Encode the whole training set using this first autoencoder
+Gives a new compressed training set
+
+Second phase: Train a second autoencoder on this new dataset
+ 
+Build a big sandwich using all these autoencoders
+
+
+*  Convolutional Autoencoders
+To build an autoencoder for images, 
+Build a convolutional autoencoder.
+
+The encoder reduces the spatial dimensionality while increasing the depth
+
+The decoder upscales the image and reduce its depth back to the original dimensions
+
+
+* Recurrent Autoencoders
+To build an autoencoder for sequences, recurrent neural networks may be better suited than dense networks. 
+
+The encoder is typically a sequence-to-vector RNN.
+The decoder is a vector-to-sequence RNN. 
+
+* Denoising Autoencoders
+Add noise to its inputs
+Training it to recover the original 
+
+
+* Sparse Autoencoders
+By adding an appropriate term to the cost function, the autoencoder is pushed to reduce the number of active neurons in the coding layer.
+
+Sigmoid activation function in the coding layer and use a large coding layer
+
+
+ActivityRegularization: Returns its inputs and adds a training loss equal to the sum of absolute values of its inputs 
+
+Encourages the neural network to produce codings close to 0
+
+Penalized if it does not reconstruct the inputs correctly
+
+Alternatively, measure the actual sparsity of the coding layer at each training iteration and penalize the model when the measured sparsity differs from a target sparsity.
+
+Compute the average activation of each neuron in the coding layer, over the whole training batch.
+
+
+Penalize the neurons that are too active or not active enough by adding a sparsity loss to the cost function
+
+* Variational Autoencoders
+Probabilistic autoencoders: Outputs are partly determined by chance, even after training
+
+Generative autoencoders: generate new instances as if sampled
+
+Variational autoencoders perform variational Bayesian inference    The encoder produces a mean coding and a standard deviation. 
+The actual coding is then sampled randomly from a Gaussian distribution with mean and standard deviation 
+The decoder decodes the sampled coding normally
+
+A variational autoencoder tends to produce codings that look as though they were sampled from a simple Gaussian distribution
+
+The cost function pushes the codings to gradually migrate within the coding (latent) space to end up looking like a cloud of Gaussian points
+
+The cost function is composed of two parts
+reconstruction loss and the latent loss 

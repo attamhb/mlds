@@ -373,3 +373,5 @@ Document rotation
 
 *** Fine-tuning a BERT model in PyTorch
 
+There is a system of axioms called the Zermelo-Frankel Axioms for Sets upon which it is possible to formally establish properties of sets and thereby properties of relations and functions. 
+

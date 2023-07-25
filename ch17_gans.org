@@ -1,0 +1,142 @@
+
+*  GANs 
+Most important breakthroughs
+Allowing computers to generate new data (such as new images)
+
+* INTRODUCING GANS
+Objective: Synthesize new data that has the same distribution as its training dataset
+
+Unsupervised learning category 
+
+Extensions of GAN: both the semi-supervised and supervised domains
+
+Use cases: 
+ Image-to-image translation, image super-resolution, image in-painting 
+
+* Starting with autoencoders
+Can compress and decompress training data
+
+Two networks concatenated together (encoder and network)
+
+Input: d-dimensional input x 
+Encoded input:  p-dimensional vector z (p < d)
+
+The encoder acts as a data compression function
+
+The decoder decompresses g(z) 
+
+When there is no nonlinearity in either of the two subnetworks, then the autoencoder approach is almost identical to PCA.
+
+Types of autoencoders
+Latent vector the bottleneck
+Under-complete autoencoder (p < d)
+Over-complete (p > d)
+De-noising autoencoder
+
+* Generative models for synthesizing new data
+Autoencoders: Deterministic models
+A generative model can generate a new example
+Decoder component has similarities with a generative
+They receive  z as input and return x as an output 
+
+Difference between the two: We do not know the distribution of z in the autoen-coder, while in a generative model, the distribution of z is fully characterizable. 
+
+VAE: The encoder network is modified in such a way that it computes two moments of the distribution of the latent vector: the mean and variance. 
+
+Autoregressive models and normalizing flow models
+
+Generative models are defined as algorithms that model data input distributions, p(x), or the joint distributions of the input data and associated targets, p(x, y). 
+
+These models are also capable of sampling from some feature, xi, conditioned on another feature, xj, which is known as conditional inference.
+
+Generative model generate realistic-looking data.
+We can sample from input distributions, p(x) 
+We cannot perform conditional inference
+
+* Generating new samples with GANs
+
+Consider a network that receives a random vector z sampled from a known distribution and generates an output image G(z) 
+
+Initialize this network with random weights
+
+Assessor function (assess the quality of images)
+
+Our brain can assess the quality of synthesized images.
+
+Can we design an NN model to do the same thing?
+
+A GAN model consists of an additional NN called discriminator (D), 
+
+D is a classifier that learns to detect a synthesized image
+
+Generator and discriminator are trained together
+
+At first, the generator creates poor images and  the discriminator bab at distinguishing images
+
+The two networks play an adversarial game
+
+The generator learns to improve its output to be able to fool the discriminator
+
+The discriminator becomes better at detecting the synthesized images
+
+The value function: Interpreted as a payoff: maximize value with respect to the discriminator D and minimize  with respect to the generator G
+
+Alternatively,
+Freeze the parameters of one network and optimize the weights of the other one 
+
+And  fix the second network and optimize the first one
+
+Repeated at each training iteration (the two steps)
+
+This function suffers from vanishing gradients in the early training stages
+
+Reformulate the minimization objective 
+
+* Implementing a GAN from scratch
+
+Training on Google Colab: a free cloud computing service 
+
+For each hidden layer apply the leaky ReLU 
+
+Discriminator network: hidden layer is followed by dropout layer
+Generator: output layer uses the tanh activation function
+
+* Improving the quality of synthesized images using a convolutional and Wasserstein GAN
+A transposed convolution operation is usually used for upsampling 
+the feature space.
+
+* Batch normalization
+
+1. Compute the mean and standard deviation of the net inputs for each mini-batch
+
+2. Standardize the net inputs for all examples in the batch 
+
+3. Scale and shift the normalized net inputs using two learnable parameter vectors
+
+* Implementing the generator and discriminator
+
+The generator takes a vector, z, of size 100 as input.
+
+Then, a series of transposed convolutions upsamples the feature maps until the spatial dimension of the resulting feature
+maps reaches 28×28.
+
+* Dissimilarity measures between two distributions
+Total variation (TV) measure
+Earth Mover's (EM) distance
+
+
+The loss function in the original GAN indeed minimizes the JS divergence between the distribution of real and fake examples
+
+* Using EM distance in practice for GANs 
+
+We can simply train an NN model to approximate the Wasserstein distance function.
+
+The simple GAN uses a discriminator in the form of a classifier. 
+
+For WGAN, the discriminator can be changed to behave as a critic, which returns a scalar score instead of a probability value.
+
+We can interpret this score as how realistic the input images are. 
+
+
+* Using EM distance in practice for GANs
+Now, the question is, how do we find such a 1-Lipschitz continuous function to compute the Wasserstein distance between the distribution of real (Pr) and fake (Pg) outputs for a GAN? While the theoretical concepts behind the WGAN approach may seem complicated at first, the answer to this question is simpler than it may appear. Recall that we consider deep NNs to be universal function approximators. This means that we can simply train an NN model to approximate the Wasserstein distance function. As you saw in the previous section, the simple GAN uses a discriminator in the form of a classifier. For WGAN, the discriminator can be changed to behave as a critic, which returns a scalar score instead of a probability value. We can interpret this score as how realistic the input images are (like an art critic giving scores to artworks in a gallery). To train a GAN using the Wasserstein distance, the losses for the discriminator, D, and generator, G, are defined as follows. The critic (that is, the discriminator network) returns its outputs for the batch of real image examples and the batch of synthesized examples. We use the notations D(x) and D(G(z)), respectively.
