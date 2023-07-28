@@ -1,0 +1,236 @@
+* Machine Learning Basics
+Machine learning:
+form of applied statistics,
+statistically estimate complicated functions
+a decreased emphasis on proving conﬁdence intervals 
+
+Frequentist estimators
+Bayesian inference 
+** Learning Algorithms
+Able to learn from data. 
+*Learning*: A program learns from experience E with respect to some task T and performance measure P, if P in T improves with E
+*** The Task, T
+Understanding of machine learning entails developing our understanding of the principles that underlie intelligence
+
+Learning is our means of attaining the ability to perform the task
+
+*** Classiﬁcation:
+The computer program is asked to specify which of k categories some input belongs to. 
+ y=f: R^n -\to {1,...,k}
+
+Probability distribution over classes: 
+Object recognition
+Input is an image and the output is a numeric code identifying the object in the image
+ 
+*** Classiﬁcation with missing inputs:
+The learning algorithm only has to deﬁne a single function mapping from a vector input to a categorical output
+
+When some of the inputs may be missing,
+rather than providing a single classiﬁcation function, the learning algorithm must learn a set of functions.
+
+Each function corresponds to classifying x with a diﬀerent subset of its inputs missing.
+
+One way to eﬃciently deﬁne such a large set of functions is 
+to learn a probability distribution over all of the relevant 
+variables, then solve the classiﬁcation task by marginalizing 
+out the missing variables.
+
+With n input variables, we can now 
+obtain all 2^n diﬀerent classiﬁcation functions needed for
+each possible set of missing inputs, but we only need to learn 
+a single function describing the joint probability 
+distribution. 
+
+*** Regression:
+The computer program is asked to predict a
+numerical value given some input  f:R^n → R
+
+*** Transcription:
+The machine learning system is asked to observe a relatively 
+unstructured representation of some kind of data and 
+transcribe it into discrete, textual form.  
+
+Examples: Google Street View, Speech recognition 
+
+*** Machine translation:
+The input already consists of a sequence of symbols in some 
+language, and the computer program must convert this into a 
+sequence of symbols in another language. 
+
+*** Structured output:
+Such tasks involve any task where the
+output is a vector with important relationships between the diﬀerent elements
+
+Example: Parsing—mapping a natural language sentence into a 
+tree that describes its grammatical structure and tagging 
+nodes of the trees as being verbs, nouns, or adverbs, and so 
+on. 
+
+*** Anomaly detection:
+The computer program ﬂags some of them as being anomaly
+
+*** Synthesis and sampling:
+The machine learning algorithm is asked to generate new examples that are similar to those in the training data
+
+*** Imputation of missing values:
+The learning algorithm is given a new example x ∈ R^n, 
+but with some entries x_i of x missing. The algorithm must provide a prediction of the values of the missing entries.
+*** Denoising:
+The algorithm is given in input a corrupted example x̃ ∈ R^n 
+obtained by an unknown corruption process from a clean example 
+x ∈ R^n.
+
+The learner must predict the clean example x from its
+corrupted version x̃, or more generally predict the conditional 
+probability distribution p(x|x̃).
+
+*** Density estimation or probability mass function estimation:
+The algorithm is asked to learn a function p_model : R^n → R. 
+** The Performance Measure, P
+For classiﬁcation: Measure the accuracy 
+Error rate:  The expected 0-1 loss
+For density estimation: The average log-probability 
+
+** The Experience, E
+*Unsupervised Learning Algorithms:*
+In the context of deep learning, we usually want to learn the entire probability distribution that generated a dataset
+
+*Supervised Learning Algorithms:* It involves observing several 
+examples of a random vector x and an associated value or vector 
+y, and learning to predict y from x, usually by estimating 
+p(y|x).
+
+
+The lines between them are often blurred. Many machine learning 
+technologies can be used to perform both tasks. For example, the 
+chain rule of probability states that for a vector x ∈ R^n, the 
+joint distribution can be decomposed as
+ 
+           p(x) = \prod_{i=1:n} p(x_i|x_1, x_2, ..., x_n)
+
+           
+We can solve unsupervised problem of modeling p(x) by splitting 
+it into n supervised learning problems.
+
+We can solve the supervised learning problem of learning 
+p(y|x) by using traditional unsupervised learning technologies 
+to learn the joint distribution p(x,y) and inferring
+
+             p(y|x) = p(x|y)/\sum_{y'}p(x,y')
+             
+
+Traditionally, people refer to regression, classiﬁcation and structured output problems as supervised learning.
+
+Density estimation in support of other tasks is usually considered unsupervised learning.
+
+In semi- supervised learning, some examples include a supervision target but others do not.
+
+In multi-instance learning, an entire collection of examples is 
+labeled as containing or not containing an example of a class, 
+but the individual members of the collection are not labeled. 
+
+Some machine learning algorithms do not just experience a ﬁxed 
+dataset. For example, reinforcement learning. 
+
+
+** Example: Linear Regression
+Build a system that can take a vector x \in R^n as input and 
+predict the value of a scalar y \in R as its output. The output is 
+a linear function of the input. 
+
+Let \hat{y} the value that our model predicts y should take on. 
+We deﬁne the output to be 
+\hat{y} = w^T \cdot x where w \in R^n is a vector of parameters. 
+
+We thus have a deﬁnition of our task T : to predict y from x by outputting ŷ = w^T \cdot x.
+
+
+** Capacity, Overﬁtting and Underﬁtting
+
+*Generalization* The ability to perform well on previously unobserved inputs is called generalization.
+
+*Generalization error* is deﬁned as the expected value of the 
+error on a new input. (taken across 
+diﬀerent possible inputs)  
+
+*Data generating process*
+The train and test data are generated by a probability 
+distribution over datasets called the data generating process. 
+
+
+*Assumptions*: The examples in each dataset are independent from 
+each other, and that the train set and test set are identically 
+distributed, drawn from the same probability distribution as 
+each other. 
+
+*Data Generating Distribution*
+The same distribution is then used to generate every train example and every test example,  denoted p_data . 
+
+
+The expected training error of a randomly selected model is equal to the expected test error of that model.
+
+We sample the training set, then use it to choose the parameters to reduce training set error, then sample the test set.
+
+The factors determining how well a machine learning algorithm will perform are its ability to:
+
+1. Make the training error small. 
+2. Make the gap between training and test error small.
+
+*Capacity* A model's capacity is its ability to ﬁt a wide variety 
+of functions. 
+
+*Underfitting:* Models with low capacity may struggle to ﬁt the 
+training set. 
+
+*Overfitting:*
+Models with high capacity can overﬁt by memorizing properties of 
+the training set that do not serve them well on the test set. 
+
+*A Solution*
+One way to control the capacity of a learning algorithm is by 
+choosing its hypothesis space, the set of functions that the 
+learning algorithm is allowed to select as being the solution. 
+
+Including polynomials instead of linear functions in the regression algorithm. 
+
+
+Machine learning algorithms will generally perform best when 
+their capacity is appropriate for the true complexity of the 
+task they need to perform and the amount of training data they 
+are provided with. 
+
+
+*Representational Capacity*
+The model speciﬁes which family of functions the learning algorithm can choose from when varying the parameters in order to reduce a training objective. 
+
+In many cases, ﬁnding the best function within this family is a very diﬃcult optimization problem.
+
+These additional limitations, such as the imperfection of the 
+optimization algorithm, mean that the learning algorithm’s 
+eﬀective capacity may be less than the representational capacity 
+of the model family.
+
+*Vapnik-Chervonenkis dimension* The VC dimension measures the 
+capacity of a binary classiﬁer and is deﬁned as being the 
+largest possible value of m for which there exists a training 
+set of m diﬀerent x points that the classiﬁer can label 
+arbitrarily.
+
+Quantifying the capacity of the model allows statistical learning theory to make quantitative predictions
+
+The discrepancy between training error and generalization error 
+is bounded from above by a quantity that grows as the model 
+capacity grows but shrinks as the number of training examples 
+increase.
+
+Typically, training error decreases until it asymptotes to the 
+minimum possible error value as model capacity increases. 
+
+Typically, generalization error has a U-shaped curve as a 
+function of model capacity.
+
+*Non-parameteric Models*
+Nearest neighbor regression model simply stores the X and y from 
+the training set. When asked to classify a test point x, the model looks up the nearest entry in the training set and returns the associated regression target. 
+
+Finally, we can also create a non-parametric learning algorithm by wrapping a parametric learning algorithm inside another algorithm that increases the number of parameters as needed. For example, we could imagine an outer loop of learning that changes the degree of the polynomial learned by linear regression on top of a polynomial expansion of the input. The ideal model is an oracle that simply knows the true probability distribution that generates the data. Even such a model will still incur some error on many problems, because there may still be some noise in the distribution. In the case of supervised learning, the mapping from x to y may be inherently stochastic, or y may be a deterministic function that involves other variables besides those included in x. The error incurred by an oracle making predictions from the true distribution p(x, y) is called the Bayes error. Training and generalization error vary as the size of the training set varies. Expected generalization error can never increase as the number of training examples increases. For non-parametric models, more data yields better generalization until the best possible error is achieved. Any ﬁxed parametric model with less than optimal capacity will asymptote to an error value that exceeds the Bayes error. See ﬁgure 5.4 for an illustration. Note that it is possible for the model to have optimal capacity and yet still have a large gap between training and generalization error. In this situation, we may be able to reduce this gap by gathering more training examples.

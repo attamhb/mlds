@@ -1,0 +1,27 @@
+
+* Graph Neural Networks for Capturing Dependencies in Graph Structured Data
+** Understanding graph convolutions
+Key component for building GNNs
+
+Motivation: 
+
+Shift-invariance
+Locality
+Hierarchy
+
+Number of trainable parameters does not depend on the dimensionality of the input
+
+Graphs also have natural priors that justify a convolutional approach
+
+In images, the prior is on locality in 2D space, while with graphs, it is structural locality
+
+Intuitively, this means that a node that is one edge away is more likely to be related than a node five edges away 
+
+Any graph convolution needs to be permutation invariant
+Most graph datasets contain graphs of varying sizes
+
+Each row of X as being an embedding of the information that is stored at the node corresponding to that row
+
+Graph convolutions update the embeddings at each node based on the embeddings of their neighbors and themselve
+
+

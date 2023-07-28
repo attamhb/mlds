@@ -1,6 +1,5 @@
 
 * Representation Learning and Generative Learning Using Autoencoders and GANs
-
 *Autoencoders*: 
 Capable of learning dense representations of data
 Lower dimensionality (Visualization)
@@ -10,11 +9,9 @@ Generative models(Generate new data)
 *Generative adversarial networks:*
 https://thispersondoesnotexist.com/
 https://thisrentaldoesnotexist.com/ 
-
 Two neural networks:
 Generator 
-Discriminator 
-
+Discriminato
 * Efficient Data Representations
 An autoencoder looks at the inputs converts them to an efficient latent representation and then spits out something that looks very close to the inputs. 
 
@@ -37,7 +34,6 @@ Must find a way to output a copy of its inputs
 
 Linear activations
 Cost function: MSE
-
 
 * Stacked Autoencoders
 Multiple hidden layers (deep autoencoders)
@@ -62,9 +58,7 @@ Compiling:
 Use the binary cross-entropy loss 
 Train the model using the same training set for the target set as well
 
-
 * Visualizing the Reconstructions
-
 
 * Visualizing the Fashion MNIST Dataset
 Use the trained stacked autoencoder to reduce the dataset's dimensionality
@@ -87,7 +81,6 @@ Just train an autoencoder using all the training data (labeled plus unlabeled)
 
 Then reuse its encoder layers to create a new neural network.
 
- 
 * Tying Weights 
 For a neatly symmetrical autoencoder:
 
@@ -109,7 +102,6 @@ Second phase: Train a second autoencoder on this new dataset
  
 Build a big sandwich using all these autoencoders
 
-
 *  Convolutional Autoencoders
 To build an autoencoder for images, 
 Build a convolutional autoencoder.
@@ -117,7 +109,6 @@ Build a convolutional autoencoder.
 The encoder reduces the spatial dimensionality while increasing the depth
 
 The decoder upscales the image and reduce its depth back to the original dimensions
-
 
 * Recurrent Autoencoders
 To build an autoencoder for sequences, recurrent neural networks may be better suited than dense networks. 
@@ -128,7 +119,6 @@ The decoder is a vector-to-sequence RNN.
 * Denoising Autoencoders
 Add noise to its inputs
 Training it to recover the original 
-
 
 * Sparse Autoencoders
 By adding an appropriate term to the cost function, the autoencoder is pushed to reduce the number of active neurons in the coding layer.
@@ -164,3 +154,5 @@ The cost function pushes the codings to gradually migrate within the coding (lat
 
 The cost function is composed of two parts
 reconstruction loss and the latent loss 
+
+on 17-3. Variational autoencoder’s latent loss
