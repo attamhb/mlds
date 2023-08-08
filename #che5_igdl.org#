@@ -3,7 +3,6 @@ Machine learning:
 form of applied statistics,
 statistically estimate complicated functions
 a decreased emphasis on proving conﬁdence intervals 
-
 Frequentist estimators
 Bayesian inference 
 ** Learning Algorithms
@@ -231,8 +230,100 @@ function of model capacity.
 
 *Non-parameteric Models*
 Nearest neighbor regression model simply stores the X and y from 
-the training set. When asked to classify a test point x, the model looks up the nearest entry in the training set and returns the associated regression target. 
+the training set. When asked to classify a test point x, the 
+model looks up the nearest entry in the training set and returns 
+the associated regression target. 
 
-We can also create a non-parametric learning algorithm by wrapping a parametric learning algorithm inside another algorithm that increases the number of parameters as needed.
+We can also create a non-parametric learning algorithm by 
+wrapping a parametric learning algorithm inside another 
+algorithm that increases the number of parameters as needed.
 
-For example, we could imagine an outer loop of learning that changes the degree of the polynomial learned by linear regression on top of a polynomial expansion of the input. The ideal model is an oracle that simply knows the true probability distribution that generates the data. Even such a model will still incur some error on many problems, because there may still be some noise in the distribution. In the case of supervised learning, the mapping from x to y may be inherently stochastic, or y may be a deterministic function that involves other variables besides those included in x. The error incurred by an oracle making predictions from the true distribution p(x, y) is called the Bayes error. Training and generalization error vary as the size of the training set varies. Expected generalization error can never increase as the number of training examples increases. For non-parametric models, more data yields better generalization until the best possible error is achieved. Any ﬁxed parametric model with less than optimal capacity will asymptote to an error value that exceeds the Bayes error. See ﬁgure 5.4 for an illustration. Note that it is possible for the model to have optimal capacity and yet still have a large gap between training and generalization error. In this situation, we may be able to reduce this gap by gathering more training examples.
+**  The No Free Lunch Theorem
+Learning theory claims that a machine learning algorithm can 
+generalize well from a ﬁnite training set of examples.
+
+This seems to contradict some basic principles of logic. 
+
+Inductive reasoning, or inferring general rules from a limited 
+set of examples, is not logically valid. 
+
+To logically infer a rule describing every member of a set, one must have information about every member of that set. 
+
+In part, machine learning avoids this problem by oﬀering only 
+probabilistic rules, rather than the entirely certain rules used 
+in purely logical reasoning. 
+
+The no free lunch theorem for machine learning states that, averaged over all possible data generating distributions, every classiﬁcation algorithm has the same error rate when classifying previously unobserved points.
+
+No machine learning algorithm is universally any better than any other.
+
+The goal of machine learning research is not to seek a universal 
+learning algorithm or the absolute best learning algorithm. 
+
+
+** Regularization
+The no free lunch theorem implies that we must design our 
+machine learning algorithms to perform well on a speciﬁc task. 
+
+We do so by building a set of preferences into the learning 
+algorithm. When these preferences are aligned with the learning 
+problems we ask the algorithm to solve, it performs better.
+
+The behavior of our algorithm is strongly aﬀected not just by how large we make the set of functions allowed in its hypothesis space, but by the speciﬁc identity of those functions. 
+
+We can also give a learning algorithm a preference for one 
+solution in its hypothesis space to another. The unpreferred 
+solution will be chosen only if it ﬁts the training
+
+
+We can modify the training criterion for linear regression to 
+include weight decay. 
+
+
+We can regularize a model that learns a function f(x; \theta) by 
+adding a penalty called a regularizer to the cost function.
+
+
+** Hyperparameters and Validation Sets
+Most machine learning algorithms have several settings that we 
+can use to control the behavior of the learning algorithm. These 
+settings are called hyperparameters.
+
+More frequently, the setting must be a hyperparameter because it is not appropriate to learn that hyperparameter on the training set.
+
+Split the training data into two disjoint subsets. One of these 
+subsets is used to learn the parameters. The other subset is our 
+validation set, used to estimate the generalization error during 
+or after training, allowing for the hyperparameters to be 
+updated accordingly. 
+
+The subset of data used to learn the parameters is still 
+typically called the training set, even though this may be 
+confused with the larger pool of data used for the entire 
+training process.
+
+The subset of data used to guide the selection of 
+hyperparameters is called the validation set.
+
+
+The validation set error will underestimate the generalization 
+error, though typically by a smaller amount than the training 
+error.
+
+After all hyperparameter optimization is complete, the 
+generalization error may be estimated using the test set.
+
+
+** Cross-Validation
+*k-fold cross-validation* A partition of the dataset is formed by 
+splitting it into k non-overlapping subsets. The test error may 
+then be estimated by taking the average test error across k 
+trials. One problem is that there exist no unbiased estimators 
+of the variance of such average error estimators, but 
+approximations are typically used.
+
+**  Estimators, Bias and Variance
+
+*** Point Estimation
+Point estimation is the attempt to provide the single "best" 
+prediction of some quantity of interest. In general the quantity of interest can be a single parameter or a vector of parameters in some parametric model, such as the weights in our linear regression example in section 5.1.4, but 

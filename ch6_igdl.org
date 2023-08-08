@@ -1,0 +1,99 @@
+* Deep Feedforward Networks
+A feedforward network deﬁnes a mapping y = f (x; \theta) and learns the 
+value of the parameters \theta that result in the best function 
+approximation. Feedforward neural networks are called networks 
+because they are typically represented by composing together many 
+diﬀerent functions. The model is asso- ciated with a directed 
+acyclic graph describing how the functions are composed together  
+f(x) = f^(n) (f^(n-1) ... (f^(1)(x))). 
+
+f^(j) is called the j^th layer of the network
+
+Overall length of the chain gives the depth of the model.
+
+
+To extend linear models to represent nonlinear functions of x, we 
+can apply the linear model not to x itself but to a transformed 
+input \phi(x), where \phi is a the strategy of deep learning is to learn 
+y = f (x; \theta , w) = \Phi(x; \theta)^T \cdot w
+
+** Example: Learning XOR 
+The XOR function is an operation on two binary values, x_1 and 
+x_2. 
+
+The XOR function provides the target function y = f^{∗}(x) that we 
+want to learn. 
+
+Our model provides a function y = f(x;\theta) and our learning 
+algorithm will adapt the parameters \theta to make f as similar as 
+possible to f^{∗}. 
+
+X = {
+     [0, 0]^T,
+     [0, 1]^T, 
+     [1, 0]^T,  
+     [1, 1]^T 
+            }
+
+            
+One hidden function:
+ h = f^(1)(x,W,c)
+ y = f^(2)(x,w,b)
+ 
+f(x; W, c, w, b) = f^(2)(f^(1)(x))
+
+h = g(W^T x + c) # g as Relu function 
+
+f(x;W,c,w,b) = w^T max{0, W^T x + c} + b
+
+
+
+Gradient-Based Learning
+
+Build a machine learning algorithm
+Specify an optimization procedure
+Specify a cost function
+Specify a model family
+
+Computing the gradient of the loss function 
+in deep neural networks is done through back 
+propagation.
+
+**  Cost Function
+
+
+Model p(y|x;\theta), use MLE
+i.e. Cross Entropy between the training data and 
+model's prediction
+
+
+
+***   Learning Conditional Distribution with MLE
+
+J(\theta) = -_{}E_{  x,y ~ p_data   } log p_modal (y|x).
+
+----------------------------------------
+----------------------------------------
+
+J(\theta) = -_{}E_{  x,y ~ p_data   } || y - f(x;\theta)||^2 + const
+
+
+----------------------------------------
+
+**  Back-Propagation 
+Forward propagation uses x to produce \hat y
+
+Back-propagation allows information from the
+cost to then flow backwards through network 
+in order to compute the gradient
+
+It is inexpensive
+
+*** Computational Graphs
+
+Each node to indicate a variable (Scalar, 
+Vector, matrix, tensor or even a variable)
+
+
+
+
